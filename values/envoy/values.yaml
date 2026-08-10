@@ -1,3 +1,2 @@
-# Values for the envoy-gateway app (apps/envoy.yaml, gateway-helm chart).
 deployment:
-  replicas: 2
+  replicas: 1
