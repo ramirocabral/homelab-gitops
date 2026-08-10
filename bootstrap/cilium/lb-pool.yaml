@@ -1,0 +1,9 @@
+# The pool is its OWN routed subnet (192.168.90.0/24), separate from the node
+# LAN (192.168.9.0/24).
+apiVersion: cilium.io/v2
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: lab-pool
+spec:
+  blocks:
+    - cidr: 192.168.90.0/24
