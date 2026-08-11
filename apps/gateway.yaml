@@ -11,8 +11,6 @@ spec:
     repoURL: https://github.com/ramirocabral/homelab-gitops.git
     targetRevision: main
     path: workloads/gateway
-    directory:
-      recurse: false
   destination:
     server: https://kubernetes.default.svc
     namespace: envoy-gateway-system
