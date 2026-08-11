@@ -17,7 +17,7 @@ spec:
       ref: repo
     - repoURL: https://github.com/ramirocabral/homelab-gitops.git
       targetRevision: main
-      path: workloads/cert-manager/manifests   # acá va clusterissuer.yaml
+      path: workloads/cert-manager
   destination:
     namespace: cert-manager
     server: https://kubernetes.default.svc
