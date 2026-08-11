@@ -36,6 +36,13 @@ kubectl apply -n argocd --server-side --force-conflicts \
   -f https://raw.githubusercontent.com/argoproj/argo-cd/v2.13.2/manifests/install.yaml
 kubectl -n argocd rollout status deploy/argocd-server
 
+# 2) Run argocd-server in insecure (HTTP) mode: TLS is terminated upstream at the
+#    Envoy Gateway (HTTPRoute -> argocd-server:80), so the backend must not do its
+#    own TLS or it redirect-loops. Sets server.insecure in argocd-cmd-params-cm.
+kubectl patch configmap argocd-cmd-params-cm -n argocd \
+  --type merge -p '{"data":{"server.insecure":"true"}}'
+kubectl rollout restart deployment argocd-server -n argocd
+
 # Seed the root ApplicationSet -- from here on, apps/ is fully GitOps-managed.
 kubectl apply -f argocd/root-appset.yaml
 ```
