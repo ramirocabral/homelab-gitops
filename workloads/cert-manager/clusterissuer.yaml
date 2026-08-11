@@ -1,0 +1,29 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-dns
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: ramirocabral04@gmail.com
+    privateKeySecretRef:
+      name: letsencrypt-dns-account-key
+    solvers:
+      - dns01:
+          cloudflare:
+            apiTokenSecretRef:
+              name: cloudflare-api-token
+              key: api-token
+---
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  name: cloudflare-api-token
+  namespace: cert-manager
+spec:
+  encryptedData:
+    api-token: AgBvCss/9UP9KmbSX6x3468TB7NnCnms++F2U+e7uWbXOzNFqvCZUU1140ou5bC6QZCaNVE13pxqT6WDy3tOVGrCVNuN0IK5H/+G2YVjxhiNomwYxrTLkdM3uDVRDNs9ZKXZU7zD8HGdqI5C1Ug2yeZ7aCXU8Z9K9Va90jpT/WeZ7baF5NNQTPrwubxsG4i4E/jNWORIPU+/24njCQEHQAeZJnWmy2aV+ZwulX1t9ez7gCdYY1wN3EaP+9D0SIcr71U7fFP8puK5t6lzzXiz5xS/eguwaEmCxbE1hCttc+9VCT4AHGOWoyNIoCTdmYWzsn9Hu8HWPOYytHISp6+B86EDwyTsSJP3aY/O0as70aLLLUzx2qyMoJjvvKaqVD75FgmY89sydki+0j1wub2bVFPLoryHioHxrnmeUDSBZwF86rJXso/8VsE+1XBkOgiqNraexSH1hc3+6NdXSB/C3vuaXGC7CBxv/kShyD7FdHGpSSks9zWiiCwWmWKjvdXOENUWyumuCkbDfqJWlyu1d2peafoTR9XbSTrWt35qwgYM+LYy4ofXCMoj3zIJd/xGlHNRQ+5hEPPU8cfnGQ4GYgO+exiy6uepj5aU4hp5rBbvuK0CBxembMweJqwY4t49NLHyQxK9FIbtBjXY4ctQQwgsjbao8lQ68lbUxeIWp4OSOMtyVvvuOaEV1zyFtsU6gbFprXdlHilwzY4R/lwhcpsL0n/SbwHXeJfbfp56K1hQtbN9aE04jeQicavUZ4Nkl0PV7MFLAA==
+  template:
+    metadata:
+      name: cloudflare-api-token
+      namespace: cert-manager
