@@ -1,0 +1,27 @@
+defaultSettings:
+  defaultDataPath: /var/lib/longhorn/
+  replicaAutoBalance: best-effort
+  nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod # comportamiento cuando un pod queda en un nodo que se cae. Longhorn fuerza la eliminacion del pod luego de 5 minutos.
+  #https://longhorn.io/docs/1.12.0/maintenance/maintenance/#block-for-eviction-if-contains-last-replica
+  nodeDrainPolicy: block-for-eviction-if-contains-last-replica          # comportamiento cuando un nodo se drena (o cordonea!). Longhorn bloquea el drenaje hasta no mover la ultima replica de un volumen.
+  storageReservedPercentageForDefaultDisk: 10
+
+# Un solo nodo de storage por ahora
+persistence:
+  defaultClassReplicaCount: 1
+
+httproute:
+  enabled: true
+  parentRefs:
+    - name: shared
+      namespace: envoy-gateway-system
+      sectionName: https
+  hostnames:
+    - "longhorn.lab.cabral.net.ar"
+  path: /
+
+longhornUI:
+  replicas: 1
+
+preUpgradeChecker:
+  jobEnabled: false   # allows Longhorn to perform pre-upgrade checks. Must disable when installing Longhorn using argo.
