@@ -1,0 +1,8 @@
+# GatewayClass backed by the Envoy Gateway controller.
+# Referenced by Gateways via spec.gatewayClassName: eg
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: eg
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller

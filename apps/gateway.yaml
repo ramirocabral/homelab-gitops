@@ -1,0 +1,24 @@
+# Gateway API resources for Envoy Gateway (GatewayClass, Gateway, HTTPRoutes).
+# Plain manifests live in workloads/gateway/ and are applied as a directory.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gateway
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/ramirocabral/homelab-gitops.git
+    targetRevision: main
+    path: workloads/gateway
+    directory:
+      recurse: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: envoy-gateway-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
