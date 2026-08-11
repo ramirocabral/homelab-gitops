@@ -20,3 +20,6 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+  addresses:
+    - type: IPAddress
+      value: 192.168.90.0 # we use a fixed address for the gateway, so we can point our DNS to it.
