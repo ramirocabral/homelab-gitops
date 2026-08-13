@@ -1,0 +1,53 @@
+# Radarr (movies). LinuxServer image, config on Longhorn, media on the shared NFS
+# /data tree (root folder /data/media/films). PGID=100 matches the `users` gid
+# owning the NFS files so imports/renames have group write.
+controllers:
+  radarr:
+    type: deployment
+    strategy: Recreate # RWO config PVC: never run two pods at once
+    containers:
+      app:
+        image:
+          repository: lscr.io/linuxserver/radarr
+          tag: "6.3.0"
+          pullPolicy: IfNotPresent
+        env:
+          PUID: "1000"
+          PGID: "100"
+          TZ: America/Argentina/Buenos_Aires
+        resources:
+          requests:
+            cpu: 10m
+            memory: 128Mi
+          limits:
+            memory: 768Mi
+
+service:
+  app:
+    controller: radarr
+    ports:
+      http:
+        port: 7878
+
+route:
+  app:
+    hostnames:
+      - radarr.lab.cabral.net.ar
+    parentRefs:
+      - name: shared
+        namespace: envoy-gateway-system
+        sectionName: https
+    rules:
+      - backendRefs:
+          - identifier: app
+            port: 7878
+
+persistence:
+  config:
+    existingClaim: radarr-config
+    globalMounts:
+      - path: /config
+  data:
+    existingClaim: media-data
+    globalMounts:
+      - path: /data
