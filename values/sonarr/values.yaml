@@ -1,0 +1,51 @@
+# Sonarr (tv). Root folder /data/media/tv_shows on the shared NFS /data tree.
+controllers:
+  sonarr:
+    type: deployment
+    strategy: Recreate
+    containers:
+      app:
+        image:
+          repository: lscr.io/linuxserver/sonarr
+          tag: "4.0.19"
+          pullPolicy: IfNotPresent
+        env:
+          PUID: "1000"
+          PGID: "100"
+          TZ: America/Argentina/Buenos_Aires
+        resources:
+          requests:
+            cpu: 10m
+            memory: 128Mi
+          limits:
+            memory: 768Mi
+
+service:
+  app:
+    controller: sonarr
+    ports:
+      http:
+        port: 8989
+
+route:
+  app:
+    hostnames:
+      - sonarr.lab.cabral.net.ar
+    parentRefs:
+      - name: shared
+        namespace: envoy-gateway-system
+        sectionName: https
+    rules:
+      - backendRefs:
+          - identifier: app
+            port: 8989
+
+persistence:
+  config:
+    existingClaim: sonarr-config
+    globalMounts:
+      - path: /config
+  data:
+    existingClaim: media-data
+    globalMounts:
+      - path: /data
