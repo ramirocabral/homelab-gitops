@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: media-data-nfs
+  labels:
+    app.kubernetes.io/part-of: arr-stack
+spec:
+  capacity:
+    storage: 4Ti # NFS ignores it, capacity is the TrueNAS dataset
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain # never wipe the library if the PVC goes away
+  storageClassName: ""
+  mountOptions:
+    - nfsvers=4.1
+    - hard
+    - noatime
+  nfs:
+    server: 192.168.9.5
+    path: /mnt/WAREZ/public # contains torrents/ media/films/ media/tv_shows/
+  claimRef:
+    namespace: media
+    name: media-data
