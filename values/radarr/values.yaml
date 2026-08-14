@@ -12,8 +12,8 @@ controllers:
           tag: "6.3.0"
           pullPolicy: IfNotPresent
         env:
-          PUID: "1000"
-          PGID: "100"
+          PUID: "3000"
+          PGID: "3000"
           TZ: America/Argentina/Buenos_Aires
         resources:
           requests:

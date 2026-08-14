@@ -11,8 +11,8 @@ controllers:
           tag: "5.2.3"
           pullPolicy: IfNotPresent
         env:
-          PUID: "1000"
-          PGID: "100"
+          PUID: "3000"
+          PGID: "3000"
           TZ: America/Argentina/Buenos_Aires
           WEBUI_PORT: "8080"
         resources:
