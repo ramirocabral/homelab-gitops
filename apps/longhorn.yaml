@@ -21,6 +21,9 @@ spec:
     - repoURL: https://github.com/ramirocabral/homelab-gitops.git
       targetRevision: main
       ref: repo
+    - repoURL: https://github.com/ramirocabral/homelab-gitops.git
+      targetRevision: main
+      path: workloads/longhorn
   destination:
     server: https://kubernetes.default.svc
     namespace: longhorn-system

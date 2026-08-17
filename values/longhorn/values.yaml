@@ -5,6 +5,12 @@ defaultSettings:
   #https://longhorn.io/docs/1.12.0/maintenance/maintenance/#block-for-eviction-if-contains-last-replica
   nodeDrainPolicy: block-for-eviction-if-contains-last-replica          # comportamiento cuando un nodo se drena (o cordonea!). Longhorn bloquea el drenaje hasta no mover la ultima replica de un volumen.
   storageReservedPercentageForDefaultDisk: 10
+  restoreVolumeRecurringJobs: true                                      # un volumen restaurado desde backup recupera tambien sus recurring jobs
+
+defaultBackupStore:
+  backupTarget: s3://longhorn@garage/
+  backupTargetCredentialSecret: longhorn-backup-garage
+  pollInterval: 300   # segundos
 
 # Un solo nodo de storage por ahora
 persistence:
