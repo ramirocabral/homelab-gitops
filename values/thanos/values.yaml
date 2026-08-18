@@ -46,18 +46,14 @@ storeGateway:
 
 compact:
   enabled: true
-  # Con una sola replica de Prometheus no hay nada que deduplicar
   deduplication:
     enabled: false
   extraArgs:
-    # Cuanto vive cada resolucion. Las tres conviven en el bucket y Query elige sola
-    # cual leer segun el rango pedido. 0d = para siempre.
-    # El espacio sobra (~22 GB/anio de raw contra ~1 TiB de Garage), asi que el
-    # downsampling aca es por velocidad de consulta, no por ahorro: un anio a
-    # resolucion cruda son ~525k puntos por serie, a 1h son 8760.
-    - --retention.resolution-raw=180d   # 6 meses de zoom al minuto
-    - --retention.resolution-5m=0d
-    - --retention.resolution-1h=0d
+    - --retention.resolution-raw=30d
+    - --retention.resolution-5m=1y
+    - --retention.resolution-1h=0d   # 0 = para siempre
+    - --compact.concurrency=1        # 1 sola tarea a la vez, el CPU es escaso
+    - --downsample.concurrency=1
   persistence:
     enabled: true
     storageClass: single-rwo   # scratch para bajar, procesar y volver a subir bloques
