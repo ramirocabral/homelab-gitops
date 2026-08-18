@@ -1,0 +1,65 @@
+# El chart de kube-prometheus-stack solo sabe generar Ingress, no HTTPRoute,
+# asi que las rutas van a mano. Thanos Query trae la suya en su propio chart.
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: grafana
+  namespace: observability
+spec:
+  parentRefs:
+    - name: shared
+      namespace: envoy-gateway-system
+      sectionName: https
+  hostnames:
+    - grafana.lab.cabral.net.ar
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: kube-prometheus-stack-grafana
+          port: 80
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: prometheus
+  namespace: observability
+spec:
+  parentRefs:
+    - name: shared
+      namespace: envoy-gateway-system
+      sectionName: https
+  hostnames:
+    - prometheus.lab.cabral.net.ar
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: kube-prometheus-stack-prometheus
+          port: 9090
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: alertmanager
+  namespace: observability
+spec:
+  parentRefs:
+    - name: shared
+      namespace: envoy-gateway-system
+      sectionName: https
+  hostnames:
+    - alertmanager.lab.cabral.net.ar
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: kube-prometheus-stack-alertmanager
+          port: 9093

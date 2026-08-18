@@ -1,0 +1,70 @@
+# Usa el SealedSecret que ya vive en workloads/observability/
+objstoreConfig:
+  create: false
+  name: thanos-objstore
+  key: objstore.yml
+
+# sirve las ultimas ~2h que todavia no subieron al bucket
+additionalEndpoints:
+  - dnssrv+_grpc._tcp.kube-prometheus-stack-thanos-discovery.observability.svc.cluster.local
+
+additionalReplicaLabels:
+  - prometheus_replica
+
+serviceMonitor:
+  enabled: true
+
+query:
+  replicas: 1
+  httpRoute:
+    enabled: true
+    parentRefs:
+      - name: shared
+        namespace: envoy-gateway-system
+        sectionName: https
+    hostnames:
+      - "thanos.lab.cabral.net.ar"
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+
+storeGateway:
+  replicas: 1
+  persistence:
+    enabled: true
+    storageClass: single-rwo
+    size: 8Gi
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      memory: 768Mi
+
+compact:
+  enabled: true
+  # Con una sola replica de Prometheus no hay nada que deduplicar
+  deduplication:
+    enabled: false
+  extraArgs:
+    # Cuanto vive cada resolucion. Las tres conviven en el bucket y Query elige sola
+    # cual leer segun el rango pedido. 0d = para siempre.
+    # El espacio sobra (~22 GB/anio de raw contra ~1 TiB de Garage), asi que el
+    # downsampling aca es por velocidad de consulta, no por ahorro: un anio a
+    # resolucion cruda son ~525k puntos por serie, a 1h son 8760.
+    - --retention.resolution-raw=180d   # 6 meses de zoom al minuto
+    - --retention.resolution-5m=0d
+    - --retention.resolution-1h=0d
+  persistence:
+    enabled: true
+    storageClass: single-rwo   # scratch para bajar, procesar y volver a subir bloques
+    size: 10Gi
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      memory: 1Gi

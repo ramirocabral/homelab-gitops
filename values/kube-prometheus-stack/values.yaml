@@ -1,0 +1,157 @@
+## Componentes que en k3s no exponen metricas en los puertos estandar.
+## No existe kube-proxy (Cilium hace kube-proxy replacement), y controller-manager,
+## scheduler y etcd corren embebidos en el proceso k3s escuchando solo en localhost.
+kubeProxy:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeEtcd:
+  enabled: false
+
+defaultRules:
+  rules:
+    etcd: false
+    kubeControllerManager: false
+    kubeProxy: false
+    kubeSchedulerAlerting: false
+    kubeSchedulerRecording: false
+    windows: false
+
+prometheus:
+  # service gRPC (10901) que expone el sidecar de Thanos para que lo consuma Thanos Query
+  thanosService:
+    enabled: true
+
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+    scrapeConfigSelectorNilUsesHelmValues: false
+
+    scrapeInterval: 60s
+    evaluationInterval: 60s
+
+    # Retencion local corta, es solo el buffer hasta que el sidecar sube los bloques a Garage. El historico largo lo sirve Thanos Store Gateway.
+    retention: 15d
+    retentionSize: 8GiB
+
+    # Identifica los bloques de este cluster dentro del bucket.
+    externalLabels:
+      cluster: orchid
+
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: single-rwo
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
+
+    thanos:
+      objectStorageConfig:
+        existingSecret:
+          name: thanos-objstore
+          key: objstore.yml
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          memory: 256Mi
+
+    resources:
+      requests:
+        cpu: 200m
+        memory: 1Gi
+      limits:
+        memory: 2Gi
+
+alertmanager:
+  alertmanagerSpec:
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: single-rwo
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 2Gi
+    resources:
+      requests:
+        cpu: 20m
+        memory: 64Mi
+      limits:
+        memory: 128Mi
+
+grafana:
+  sidecar:
+    datasources:
+      # No crear el datasource que apunta al Prometheus local: lo reemplazamos abajo por
+      # uno con el MISMO uid (prometheus) pero apuntando a Thanos Query. Los dashboards
+      # del chart referencian ese uid, asi que asi ven los 15d locales + todo el historico
+      # de Garage sin tener que tocar un solo dashboard.
+      defaultDatasourceEnabled: false
+
+  additionalDataSources:
+    - name: Prometheus
+      uid: prometheus
+      type: prometheus
+      access: proxy
+      isDefault: true
+      url: http://thanos-query.observability.svc.cluster.local:10902
+      jsonData:
+        timeInterval: 60s   # igual al scrapeInterval, para que Grafana calcule bien el step
+    # Acceso directo al Prometheus local, util para comparar cuando algo no cuadra
+    - name: Prometheus (local, 15d)
+      uid: prometheus-local
+      type: prometheus
+      access: proxy
+      isDefault: false
+      url: http://kube-prometheus-stack-prometheus.observability.svc.cluster.local:9090
+      jsonData:
+        timeInterval: 60s
+
+  persistence:
+    enabled: false
+  admin:
+    existingSecret: grafana-admin
+    userKey: admin-user
+    passwordKey: admin-password
+  defaultDashboardsTimezone: America/Argentina/Buenos_Aires
+  # El HTTPRoute vive en workloads/observability/
+  ingress:
+    enabled: false
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 384Mi
+
+kube-state-metrics:
+  resources:
+    requests:
+      cpu: 20m
+      memory: 64Mi
+    limits:
+      memory: 192Mi
+
+prometheus-node-exporter:
+  resources:
+    requests:
+      cpu: 20m
+      memory: 32Mi
+    limits:
+      memory: 64Mi
+
+prometheusOperator:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
