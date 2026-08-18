@@ -88,6 +88,9 @@ alertmanager:
         memory: 128Mi
 
 grafana:
+  # los dashboards viven en la DB de Grafana, no en ConfigMaps.
+  defaultDashboardsEnabled: false
+
   sidecar:
     datasources:
       # No crear el datasource que apunta al Prometheus local: lo reemplazamos abajo por
@@ -115,8 +118,15 @@ grafana:
       jsonData:
         timeInterval: 60s
 
+  # DB sqlite, el unico lugar donde viven los dashboards
   persistence:
-    enabled: false
+    enabled: true
+    storageClassName: ha-rwo
+    accessModes: ["ReadWriteOnce"]
+    size: 2Gi
+  # Para que no falle si el nuevo pod cae en otro nodo
+  deploymentStrategy:
+    type: Recreate
   admin:
     existingSecret: grafana-admin
     userKey: admin-user
