@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: karakeep
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://bjw-s-labs.github.io/helm-charts/
+      chart: app-template
+      targetRevision: 4.6.2
+      helm:
+        valueFiles:
+          - $repo/values/karakeep/values.yaml
+    - repoURL: https://github.com/ramirocabral/homelab-gitops.git
+      targetRevision: main
+      ref: repo
+    - repoURL: https://github.com/ramirocabral/homelab-gitops.git
+      targetRevision: main
+      path: workloads/karakeep
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: karakeep
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
