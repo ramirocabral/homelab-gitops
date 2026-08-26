@@ -1,0 +1,10 @@
+# Answers ARP on the node LAN for every LoadBalancer VIP handed out by lab-pool.
+apiVersion: cilium.io/v2alpha1
+kind: CiliumL2AnnouncementPolicy
+metadata:
+  name: lab-l2
+spec:
+  interfaces:
+    - ^eth0$          # the 192.168.9.0/24 NIC on all three nodes
+  loadBalancerIPs: true
+  externalIPs: false

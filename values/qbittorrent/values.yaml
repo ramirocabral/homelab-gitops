@@ -29,12 +29,11 @@ service:
     ports:
       http:
         port: 8080
-  # Torrenting port. LoadBalancer (Cilium BGP VIP) for inbound peer connections
-  # on the LAN. Optional: nothing is exposed to the internet, so this only helps
-  # LAN peers / a future router port-forward. Remove if you don't want the VIP.
   bittorrent:
     controller: qbittorrent
     type: LoadBalancer
+    annotations:
+      lbipam.cilium.io/ips: 192.168.9.241
     ports:
       bt-tcp:
         port: 6881

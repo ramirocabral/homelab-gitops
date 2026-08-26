@@ -11,7 +11,8 @@ tries to reconcile this folder.
 
 ## cilium/
 
-CNI + kube-proxy replacement + BGP-advertised LoadBalancer IPs. Install order:
+CNI + kube-proxy replacement + LoadBalancer IPs announced on the LAN over ARP.
+Install order:
 
 ```bash
 export KUBECONFIG=.../ansible/kubeconfig
@@ -19,9 +20,10 @@ helm repo add cilium https://helm.cilium.io && helm repo update cilium
 helm install cilium cilium/cilium --version 1.20.0 -n kube-system -f cilium/values.yaml
 cilium status --wait
 kubectl apply -f cilium/lb-pool.yaml
-# configure BGP on the MikroTik (192.168.9.1), then:
-kubectl apply -f cilium/bgp.example.yaml   # after filling in the ASNs
+kubectl apply -f cilium/l2-announcement.yaml
 ```
+
+`lab-pool` is `192.168.9.240-254`, carved out of the node LAN.
 
 ## argocd/
 

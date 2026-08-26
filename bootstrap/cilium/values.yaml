@@ -9,12 +9,16 @@ ipam:
 operator:
   replicas: 1
 
-bgpControlPlane:
+l2announcements:
   enabled: true
+
+k8sClientRateLimit:
+  qps: 50
+  burst: 100
 
 # since all my nodes are on the same L2, i can use native routing (no encapsulation) and let cilium install direct routes to the podCIDRs on each node.
 # pod-to-pod traffic between nodes is routed as-is, the packet keeps the real pod IP as destination (e.g. 10.42.2.8:1234), without VXLAN wrapper.
-# if nodes were on different L2 segments, i would have to advertise the podCIDRs over BGP instead (a PodCIDR CiliumBGPAdvertisement, on top of the Service one i already have).
+# if nodes were on different L2 segments none of this works: i would need encapsulation (or BGP for the podCIDRs), and the VIPs would have to go back to being routed instead of ARP-announced.
 routingMode: native
 autoDirectNodeRoutes: true
 ipv4NativeRoutingCIDR: 10.42.0.0/16   # k3s default pod CIDR

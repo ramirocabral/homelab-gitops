@@ -7,6 +7,9 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-dns
 spec:
   gatewayClassName: eg
+  infrastructure:
+    annotations:
+      lbipam.cilium.io/ips: 192.168.9.240
   listeners:
     - name: https
       protocol: HTTPS
@@ -22,4 +25,4 @@ spec:
           from: All
   addresses:
     - type: IPAddress
-      value: 192.168.90.1 # we use a fixed address for the gateway, so we can point our DNS to it.
+      value: 192.168.9.240
