@@ -27,6 +27,3 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
-  addresses:
-    - type: IPAddress
-      value: 192.168.9.240

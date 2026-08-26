@@ -1,12 +1,3 @@
-# The pool lives INSIDE the node LAN (192.168.9.0/24) on purpose: L2
-# announcements only work if the VIP is on-link for the client. If the pool were
-# its own subnet, clients would route it to the default gateway and the router
-# would be back in the path (which is exactly what broke before).
-#
-# .240-.254 is reserved for the cluster and MUST stay outside the MikroTik DHCP
-# pool. Explicit start/stop instead of a cidr so IPAM can never hand out a
-# network or broadcast address -- that is how the qbittorrent VIP once landed on
-# 192.168.90.0.
 apiVersion: cilium.io/v2
 kind: CiliumLoadBalancerIPPool
 metadata:
