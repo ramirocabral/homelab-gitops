@@ -57,3 +57,15 @@ spec:
   resources:
     requests:
       storage: 8Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jellyfin-config
+  namespace: media
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: single-rwo
+  resources:
+    requests:
+      storage: 20Gi

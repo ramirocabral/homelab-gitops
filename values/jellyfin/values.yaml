@@ -1,0 +1,59 @@
+image:
+  repository: docker.io/jellyfin/jellyfin
+  tag: "10.11.11"
+  pullPolicy: IfNotPresent
+
+deploymentStrategy:
+  type: Recreate # RWO config PVC
+
+podSecurityContext:
+  runAsUser: 3000
+  runAsGroup: 3000
+  fsGroup: 3000
+  supplementalGroups: [991] # render group, /dev/dri/renderD128
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    memory: 3Gi
+    gpu.intel.com/i915: 1 # pins the pod to the only node advertising it
+
+service:
+  port: 8096
+
+httpRoute:
+  enabled: true
+  parentRefs:
+    - name: shared
+      namespace: envoy-gateway-system
+      sectionName: https
+  hostnames:
+    - jellyfin.lab.cabral.net.ar
+
+persistence:
+  config:
+    enabled: true
+    existingClaim: jellyfin-config
+  media:
+    enabled: true
+    type: pvc
+    existingClaim: media-data
+    readOnly: true
+  cache:
+    enabled: false
+
+jellyfin:
+  env:
+    - name: JELLYFIN_CACHE_DIR
+      value: /cache-data
+
+volumes:
+  - name: cache-data
+    emptyDir:
+      sizeLimit: 10Gi
+
+volumeMounts:
+  - name: cache-data
+    mountPath: /cache-data
