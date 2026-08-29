@@ -1,0 +1,100 @@
+controllers:
+  qbit-manage:
+    type: cronjob
+    cronjob:
+      schedule: "0 * * * *"
+      concurrencyPolicy: Forbid
+      successfulJobsHistory: 1
+      failedJobsHistory: 3
+      backoffLimit: 0
+    containers:
+      app:
+        image:
+          repository: bobokun/qbit_manage
+          tag: "v4.12.0"
+          pullPolicy: IfNotPresent
+        env:
+          TZ: America/Argentina/Buenos_Aires
+          QBIT_USER:
+            valueFrom:
+              secretKeyRef:
+                name: qbit-manage
+                key: qbittorrent-user
+          QBIT_PASS:
+            valueFrom:
+              secretKeyRef:
+                name: qbit-manage
+                key: qbittorrent-password
+        resources:
+          requests:
+            cpu: 10m
+            memory: 128Mi
+          limits:
+            memory: 512Mi
+
+defaultPodOptions:
+  securityContext:
+    runAsUser: 3000
+    runAsGroup: 3000
+    fsGroup: 3000
+
+configMaps:
+  config:
+    data:
+      config.yml: |
+        commands:
+          dry_run: true
+          tag_nohardlinks: true
+          share_limits: true
+
+        qbt:
+          host: qbittorrent-app:8080
+          user: !ENV QBIT_USER
+          pass: !ENV QBIT_PASS
+
+        directory:
+          root_dir: /data/torrents
+
+        nohardlinks:
+          radarr:
+            ignore_root_dir: true
+          tv-sonarr:
+            ignore_root_dir: true
+
+        share_limits:
+          # Borrar torrents que ya no tienen hardlinks (se borraron en radarr/sonarr).
+          noHL:
+            priority: 1
+            include_all_tags:
+              - noHL
+            max_ratio: -1
+            max_seeding_time: 1m
+            min_seeding_time: 0
+            cleanup: true
+          # Borrar torrents con ratio mayor a 2.0 o tiempo de seed mayor a 180 días.
+          default:
+            priority: 999
+            categories:
+              - radarr
+              - tv-sonarr
+            max_ratio: 2.0
+            max_seeding_time: 180d
+            min_seeding_time: 0
+            cleanup: true
+
+persistence:
+  config:
+    type: emptyDir
+    globalMounts:
+      - path: /config
+  qbm-config:
+    type: configMap
+    identifier: config
+    globalMounts:
+      - path: /config/config.yml
+        subPath: config.yml
+        readOnly: true
+  data:
+    existingClaim: media-data
+    globalMounts:
+      - path: /data
