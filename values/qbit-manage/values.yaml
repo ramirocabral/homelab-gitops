@@ -52,7 +52,7 @@ configMaps:
     data:
       config.yml: |
         commands:
-          dry_run: true
+          dry_run: false
           tag_nohardlinks: true
           share_limits: true
 
