@@ -69,6 +69,9 @@ configMaps:
           radarr: /data/torrents
           tv-sonarr: /data/torrents
 
+        recyclebin:
+          enabled: false
+
         nohardlinks:
           radarr:
             ignore_root_dir: true
