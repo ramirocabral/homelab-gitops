@@ -64,6 +64,11 @@ configMaps:
         directory:
           root_dir: /data/torrents
 
+        # obligatorio aunque las dos guarden en el mismo path
+        cat:
+          radarr: /data/torrents
+          tv-sonarr: /data/torrents
+
         nohardlinks:
           radarr:
             ignore_root_dir: true
