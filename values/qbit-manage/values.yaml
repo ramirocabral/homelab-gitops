@@ -7,6 +7,13 @@ controllers:
       successfulJobsHistory: 1
       failedJobsHistory: 3
       backoffLimit: 0
+    initContainers:
+      copy-config:
+        image:
+          repository: bobokun/qbit_manage
+          tag: "v4.12.0"
+          pullPolicy: IfNotPresent
+        command: ["sh", "-c", "cp /cm/config.yml /config/config.yml"]
     containers:
       app:
         image:
@@ -15,6 +22,8 @@ controllers:
           pullPolicy: IfNotPresent
         env:
           TZ: America/Argentina/Buenos_Aires
+          QBT_RUN: "true"          # una corrida y sale
+          QBT_WEB_SERVER: "false"
           QBIT_USER:
             valueFrom:
               secretKeyRef:
@@ -90,10 +99,12 @@ persistence:
   qbm-config:
     type: configMap
     identifier: config
-    globalMounts:
-      - path: /config/config.yml
-        subPath: config.yml
-        readOnly: true
+    advancedMounts:
+      qbit-manage:
+        copy-config:
+          - path: /cm/config.yml
+            subPath: config.yml
+            readOnly: true
   data:
     existingClaim: media-data
     globalMounts:
