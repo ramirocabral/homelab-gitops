@@ -1,0 +1,98 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: workload-resources
+  namespace: observability
+spec:
+  # so i need this rule to be able to filter by workload 
+  groups:
+    - name: workload-resources
+      interval: 60s
+      rules:
+        - record: namespace_workload:container_memory_working_set_bytes:sum
+          expr: |
+            sum by (namespace, workload, workload_type) (
+              container_memory_working_set_bytes{job="kubelet", metrics_path="/metrics/cadvisor", container!=""}
+              * on (namespace, pod) group_left(workload, workload_type)
+              namespace_workload_pod:kube_pod_owner:relabel
+            )
+
+        - record: namespace_workload:container_memory_rss:sum
+          expr: |
+            sum by (namespace, workload, workload_type) (
+              container_memory_rss{job="kubelet", metrics_path="/metrics/cadvisor", container!=""}
+              * on (namespace, pod) group_left(workload, workload_type)
+              namespace_workload_pod:kube_pod_owner:relabel
+            )
+
+        - record: namespace_workload:container_memory_cache:sum
+          expr: |
+            sum by (namespace, workload, workload_type) (
+              container_memory_cache{job="kubelet", metrics_path="/metrics/cadvisor", container!=""}
+              * on (namespace, pod) group_left(workload, workload_type)
+              namespace_workload_pod:kube_pod_owner:relabel
+            )
+
+        - record: namespace_workload:container_memory_usage_bytes:sum
+          expr: |
+            sum by (namespace, workload, workload_type) (
+              container_memory_usage_bytes{job="kubelet", metrics_path="/metrics/cadvisor", container!=""}
+              * on (namespace, pod) group_left(workload, workload_type)
+              namespace_workload_pod:kube_pod_owner:relabel
+            )
+
+        - record: namespace_workload:container_cpu_usage_seconds_total:sum_rate5m
+          expr: |
+            sum by (namespace, workload, workload_type) (
+              rate(container_cpu_usage_seconds_total{job="kubelet", metrics_path="/metrics/cadvisor", container!=""}[5m])
+              * on (namespace, pod) group_left(workload, workload_type)
+              namespace_workload_pod:kube_pod_owner:relabel
+            )
+
+        - record: namespace_workload:container_network_receive_bytes_total:sum_rate5m
+          expr: |
+            sum by (namespace, workload, workload_type) (
+              rate(container_network_receive_bytes_total{job="kubelet", metrics_path="/metrics/cadvisor"}[5m])
+              * on (namespace, pod) group_left(workload, workload_type)
+              namespace_workload_pod:kube_pod_owner:relabel
+            )
+
+        - record: namespace_workload:container_network_transmit_bytes_total:sum_rate5m
+          expr: |
+            sum by (namespace, workload, workload_type) (
+              rate(container_network_transmit_bytes_total{job="kubelet", metrics_path="/metrics/cadvisor"}[5m])
+              * on (namespace, pod) group_left(workload, workload_type)
+              namespace_workload_pod:kube_pod_owner:relabel
+            )
+
+        - record: namespace_workload:kube_pod_container_resource_requests_memory:sum
+          expr: |
+            sum by (namespace, workload, workload_type) (
+              kube_pod_container_resource_requests{job="kube-state-metrics", resource="memory"}
+              * on (namespace, pod) group_left(workload, workload_type)
+              namespace_workload_pod:kube_pod_owner:relabel
+            )
+
+        - record: namespace_workload:kube_pod_container_resource_limits_memory:sum
+          expr: |
+            sum by (namespace, workload, workload_type) (
+              kube_pod_container_resource_limits{job="kube-state-metrics", resource="memory"}
+              * on (namespace, pod) group_left(workload, workload_type)
+              namespace_workload_pod:kube_pod_owner:relabel
+            )
+
+        - record: namespace_workload:kube_pod_container_resource_requests_cpu:sum
+          expr: |
+            sum by (namespace, workload, workload_type) (
+              kube_pod_container_resource_requests{job="kube-state-metrics", resource="cpu"}
+              * on (namespace, pod) group_left(workload, workload_type)
+              namespace_workload_pod:kube_pod_owner:relabel
+            )
+
+        - record: namespace_workload:kube_pod_container_resource_limits_cpu:sum
+          expr: |
+            sum by (namespace, workload, workload_type) (
+              kube_pod_container_resource_limits{job="kube-state-metrics", resource="cpu"}
+              * on (namespace, pod) group_left(workload, workload_type)
+              namespace_workload_pod:kube_pod_owner:relabel
+            )
