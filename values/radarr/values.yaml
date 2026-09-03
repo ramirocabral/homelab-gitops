@@ -6,7 +6,7 @@ controllers:
     type: deployment
     strategy: Recreate # RWO config PVC: never run two pods at once
     containers:
-      app:
+      radarr:
         image:
           repository: lscr.io/linuxserver/radarr
           tag: "6.3.0"

@@ -5,7 +5,7 @@ controllers:
     type: deployment
     strategy: Recreate
     containers:
-      app:
+      qbittorrent:
         image:
           repository: lscr.io/linuxserver/qbittorrent
           tag: "5.2.3"

@@ -15,7 +15,7 @@ controllers:
           pullPolicy: IfNotPresent
         command: ["sh", "-c", "cp /cm/config.yml /config/config.yml"]
     containers:
-      app:
+      qbit-manage:
         image:
           repository: bobokun/qbit_manage
           tag: "v4.12.0"

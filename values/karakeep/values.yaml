@@ -3,7 +3,7 @@ controllers:
     type: deployment
     strategy: Recreate
     containers:
-      app:
+      karakeep:
         image:
           repository: ghcr.io/karakeep-app/karakeep
           tag: "0.33.2"
@@ -51,7 +51,7 @@ controllers:
     type: deployment
     strategy: Recreate
     containers:
-      app:
+      meilisearch:
         image:
           repository: getmeili/meilisearch
           tag: "v1.41.0"
@@ -72,7 +72,7 @@ controllers:
   chrome:
     type: deployment
     containers:
-      app:
+      chrome:
         image:
           repository: ghcr.io/karakeep-app/karakeep-chrome
           tag: "151.0.7922.47-r1"
@@ -125,11 +125,11 @@ persistence:
     existingClaim: karakeep-data
     advancedMounts:
       karakeep:
-        app:
+        karakeep:
           - path: /data
   meili:
     existingClaim: karakeep-meilisearch
     advancedMounts:
       meilisearch:
-        app:
+        meilisearch:
           - path: /meili_data

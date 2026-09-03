@@ -4,7 +4,7 @@ controllers:
     type: deployment
     strategy: Recreate
     containers:
-      app:
+      sonarr:
         image:
           repository: lscr.io/linuxserver/sonarr
           tag: "4.0.19"
