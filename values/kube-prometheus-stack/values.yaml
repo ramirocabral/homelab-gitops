@@ -151,6 +151,13 @@ kube-state-metrics:
       memory: 192Mi
 
 prometheus-node-exporter:
+  prometheus:
+    monitor:
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_node_name]
+          targetLabel: instance
+        - sourceLabels: [__meta_kubernetes_pod_node_name]
+          targetLabel: node
   resources:
     requests:
       cpu: 20m
