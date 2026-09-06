@@ -31,3 +31,8 @@ longhornUI:
 
 preUpgradeChecker:
   jobEnabled: false   # allows Longhorn to perform pre-upgrade checks. Must disable when installing Longhorn using argo.
+
+metrics:
+  serviceMonitor:
+    enabled: true
+    interval: 60s
