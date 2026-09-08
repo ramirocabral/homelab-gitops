@@ -1,0 +1,55 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: longhorn
+  namespace: observability
+spec:
+  groups:
+    - name: longhorn
+      interval: 60s
+      rules:
+        - alert: LonghornVolumeStatusCritical
+          expr: longhorn_volume_robustness{state="faulted"} == 1
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: 'Volumen Longhorn {{ $labels.pvc_namespace }}/{{ $labels.pvc }} en Faulted'
+            description: 'El volumen {{ $labels.volume }} esta Faulted hace mas de 5m en {{ $labels.node }}: ninguna replica utilizable, el workload no puede escribir.'
+
+        - alert: LonghornVolumeStatusWarning
+          expr: longhorn_volume_robustness{state="degraded"} == 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Volumen Longhorn {{ $labels.pvc_namespace }}/{{ $labels.pvc }} en Degraded'
+            description: 'El volumen {{ $labels.volume }} esta Degraded hace mas de 5m en {{ $labels.node }}: corre con menos replicas de las pedidas.'
+
+        - alert: LonghornBackupFailed
+          expr: longhorn_backup_state == 4
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: 'Backup Longhorn fallido en el volumen {{ $labels.volume }}'
+            description: 'El backup {{ $labels.backup }} del recurring job {{ $labels.recurring_job }} quedo en Error.'
+
+        # si el recurring job ni siquiera corre no hay Backup en Error que detectar.
+        - alert: LonghornBackupStale
+          expr: (time() - longhorn_volume_last_backup_at) > 26 * 3600 and longhorn_volume_last_backup_at > 0
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Sin backup de {{ $labels.pvc_namespace }}/{{ $labels.pvc }} hace mas de 26h'
+            description: 'El ultimo backup exitoso del volumen {{ $labels.volume }} fue hace {{ $value | humanizeDuration }}, y backup-daily corre a las 06:00.'
+
+        - alert: LonghornDiskNotSchedulable
+          expr: longhorn_disk_status{condition="schedulable"} == 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Disco Longhorn {{ $labels.disk }} de {{ $labels.node }} no admite replicas'
+            description: 'Longhorn dejo de schedulear replicas en el disco: sin espacio reservable o over-provisioning al limite. Se rompen los rebuilds antes de que el filesystem se llene.'

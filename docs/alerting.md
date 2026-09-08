@@ -2,7 +2,7 @@
 
 > Generado por `scripts/gen-alerting-doc.py` desde el chart `kube-prometheus-stack 88.3.0` y `values/kube-prometheus-stack/values.yaml`.
 
-**134 alertas** (critical: 32 · warning: 93 · info: 7 · none: 2) y **96 recording rules**, repartidas en 31 objetos `PrometheusRule`: 30 los genera el chart, 1 son propios del repo.
+**139 alertas** (critical: 34 · warning: 96 · info: 7 · none: 2) y **96 recording rules**, repartidas en 32 objetos `PrometheusRule`: 30 los genera el chart, 2 son propios del repo.
 
 ## Ruteo
 
@@ -89,6 +89,8 @@ Silencian la alerta *target* mientras exista la *source* con las mismas labels d
 | [KubeletClientCertificateExpiration](#kubeletclientcertificateexpiration) | `critical` | `-` | kubernetes-system-kubelet |
 | [KubeletDown](#kubeletdown) | `critical` | `15m` | kubernetes-system-kubelet |
 | [KubeletServerCertificateExpiration](#kubeletservercertificateexpiration) | `critical` | `-` | kubernetes-system-kubelet |
+| [LonghornBackupFailed](#longhornbackupfailed) | `critical` | `5m` | longhorn |
+| [LonghornVolumeStatusCritical](#longhornvolumestatuscritical) | `critical` | `5m` | longhorn |
 | [NodeFileDescriptorLimit](#nodefiledescriptorlimit) | `critical` | `15m` | node-exporter |
 | [NodeFilesystemAlmostOutOfFiles](#nodefilesystemalmostoutoffiles) | `critical` | `1h` | node-exporter |
 | [NodeFilesystemAlmostOutOfSpace](#nodefilesystemalmostoutofspace) | `critical` | `30m` | node-exporter |
@@ -148,6 +150,9 @@ Silencian la alerta *target* mientras exista la *source* con las mismas labels d
 | [KubeletPodStartUpLatencyHigh](#kubeletpodstartuplatencyhigh) | `warning` | `15m` | kubernetes-system-kubelet |
 | [KubeletServerCertificateExpiration](#kubeletservercertificateexpiration) | `warning` | `-` | kubernetes-system-kubelet |
 | [KubeletServerCertificateRenewalErrors](#kubeletservercertificaterenewalerrors) | `warning` | `15m` | kubernetes-system-kubelet |
+| [LonghornBackupStale](#longhornbackupstale) | `warning` | `30m` | longhorn |
+| [LonghornDiskNotSchedulable](#longhorndisknotschedulable) | `warning` | `15m` | longhorn |
+| [LonghornVolumeStatusWarning](#longhornvolumestatuswarning) | `warning` | `5m` | longhorn |
 | [NodeBondingDegraded](#nodebondingdegraded) | `warning` | `5m` | node-exporter |
 | [NodeClockNotSynchronising](#nodeclocknotsynchronising) | `warning` | `10m` | node-exporter |
 | [NodeClockSkewDetected](#nodeclockskewdetected) | `warning` | `10m` | node-exporter |
@@ -1008,6 +1013,60 @@ Kubelet is running at capacity.
 
 ```promql
 ( max by (cluster, instance) ( kubelet_running_pods{job="kubelet", metrics_path="/metrics"} > 1 ) * on (cluster, instance) group_left(node) max by (cluster, instance, node) ( kubelet_node_name{job="kubelet", metrics_path="/metrics"} ) ) / on (cluster, node) group_left() max by (cluster, node) ( kube_node_status_capacity{job="kube-state-metrics", resource="pods"} != 1 ) > 0.95
+```
+
+#### longhorn
+
+<sub>PrometheusRule: `workloads/observability/longhorn.prometheusrule.yaml` (propio del repo)</sub>
+
+##### LonghornBackupFailed
+
+`critical` · `for: 5m`
+
+Backup Longhorn fallido en el volumen {{ $labels.volume }}
+
+```promql
+longhorn_backup_state == 4
+```
+
+##### LonghornVolumeStatusCritical
+
+`critical` · `for: 5m`
+
+Volumen Longhorn {{ $labels.pvc_namespace }}/{{ $labels.pvc }} en Faulted
+
+```promql
+longhorn_volume_robustness{state="faulted"} == 1
+```
+
+##### LonghornBackupStale
+
+`warning` · `for: 30m`
+
+Sin backup de {{ $labels.pvc_namespace }}/{{ $labels.pvc }} hace mas de 26h
+
+```promql
+(time() - longhorn_volume_last_backup_at) > 26 * 3600 and longhorn_volume_last_backup_at > 0
+```
+
+##### LonghornDiskNotSchedulable
+
+`warning` · `for: 15m`
+
+Disco Longhorn {{ $labels.disk }} de {{ $labels.node }} no admite replicas
+
+```promql
+longhorn_disk_status{condition="schedulable"} == 0
+```
+
+##### LonghornVolumeStatusWarning
+
+`warning` · `for: 5m`
+
+Volumen Longhorn {{ $labels.pvc_namespace }}/{{ $labels.pvc }} en Degraded
+
+```promql
+longhorn_volume_robustness{state="degraded"} == 1
 ```
 
 #### node-exporter
