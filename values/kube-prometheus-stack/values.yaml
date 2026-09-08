@@ -183,6 +183,8 @@ grafana:
       url: http://kube-prometheus-stack-prometheus.observability.svc.cluster.local:9090
       jsonData:
         timeInterval: 60s
+        # sin esto Grafana lista las reglas dos veces.
+        manageAlerts: false
 
   # DB sqlite, el unico lugar donde viven los dashboards
   persistence:
