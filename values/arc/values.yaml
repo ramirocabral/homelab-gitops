@@ -1,0 +1,11 @@
+flags:
+  logLevel: info
+  excludeLabelPropagationPrefixes:
+    - "argocd.argoproj.io/instance"
+
+resources:
+  requests:
+    cpu: 20m
+    memory: 64Mi
+  limits:
+    memory: 256Mi
