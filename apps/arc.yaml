@@ -18,7 +18,7 @@ spec:
       targetRevision: main
       ref: repo
   destination:
-    namespace: arc-systems
+    namespace: arc-system
     server: https://kubernetes.default.svc
   syncPolicy:
     syncOptions:
