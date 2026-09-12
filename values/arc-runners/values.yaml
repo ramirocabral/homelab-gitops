@@ -1,0 +1,28 @@
+githubConfigUrl: https://github.com/ramirocabral/gohoard
+
+githubConfigSecret: arc-github-pat
+
+runnerScaleSetName: homelab-dind
+
+controllerServiceAccount:
+  namespace: arc-system
+  name: arc-gha-rs-controller
+
+containerMode:
+  type: dind
+
+minRunners: 0
+maxRunners: 3
+
+template:
+  spec:
+    containers:
+      - name: runner
+        image: ghcr.io/actions/actions-runner:latest
+        command: ["/home/runner/run.sh"]
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            memory: 2Gi
