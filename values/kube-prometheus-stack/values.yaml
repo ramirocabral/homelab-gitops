@@ -104,7 +104,7 @@ alertmanager:
       routes:
         - receiver: "null"
           matchers:
-            - alertname = "Watchdog"
+            - alertname =~ "Watchdog|InfoInhibitor"
         - receiver: telegram
           matchers:
             - severity = "critical"
@@ -130,7 +130,6 @@ alertmanager:
       - source_matchers: [alertname = "InfoInhibitor"]
         target_matchers: [severity = "info"]
         equal: [namespace]
-      - target_matchers: [alertname = "InfoInhibitor"]
 
   templateFiles:
     telegram.tmpl: |-

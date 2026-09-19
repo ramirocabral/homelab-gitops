@@ -9,7 +9,7 @@
 Primera coincidencia gana: una alerta cae en **una sola** rama.
 
 - **raiz** → `telegram`  · group_by=alertname,namespace · group_wait=30s · group_interval=5m · repeat_interval=6h
-  - **alertname = "Watchdog"** → `null`
+  - **alertname =~ "Watchdog|InfoInhibitor"** → `null`
   - **severity = "critical"** → `telegram`  · repeat_interval=1h
 
 ## Receivers
@@ -36,7 +36,6 @@ Silencian la alerta *target* mientras exista la *source* con las mismas labels d
 | 1 | `severity = "critical"` | `severity =~ "warning|info"` | `namespace, alertname` |
 | 2 | `severity = "warning"` | `severity = "info"` | `namespace, alertname` |
 | 3 | `alertname = "InfoInhibitor"` | `severity = "info"` | `namespace` |
-| 4 | `—` | `alertname = "InfoInhibitor"` | `—` |
 
 ## Templates
 
