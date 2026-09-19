@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gohoard
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://github.com/ramirocabral/gohoard.git
+      targetRevision: main
+      path: deploy/charts/gohoard
+      helm:
+        valueFiles:
+          - $repo/values/gohoard/values.yaml
+    - repoURL: https://github.com/ramirocabral/homelab-gitops.git
+      targetRevision: main
+      ref: repo
+    - repoURL: https://github.com/ramirocabral/homelab-gitops.git
+      targetRevision: main
+      path: workloads/gohoard
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: gohoard
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
