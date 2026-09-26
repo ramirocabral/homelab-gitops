@@ -1,0 +1,80 @@
+controllers:
+  couchdb:
+    type: deployment
+    strategy: Recreate
+    containers:
+      couchdb:
+        image:
+          repository: couchdb
+          tag: "3.5.0"
+          pullPolicy: IfNotPresent
+        env:
+          TZ: America/Argentina/Buenos_Aires
+          ERL_FLAGS: "-setcookie livesync"
+        envFrom:
+          - secretRef:
+              name: obsidian-livesync-secrets
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /_up
+                port: 5984
+              initialDelaySeconds: 30
+              periodSeconds: 30
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /_up
+                port: 5984
+              initialDelaySeconds: 10
+              periodSeconds: 15
+        resources:
+          requests:
+            cpu: 50m
+            memory: 256Mi
+          limits:
+            memory: 1Gi
+
+service:
+  couchdb:
+    controller: couchdb
+    ports:
+      http:
+        port: 5984
+
+route:
+  couchdb:
+    hostnames:
+      - obsidian.lab.cabral.net.ar
+    parentRefs:
+      - name: shared
+        namespace: envoy-gateway-system
+        sectionName: https
+    rules:
+      - backendRefs:
+          - identifier: couchdb
+            port: 5984
+
+persistence:
+  data:
+    existingClaim: obsidian-livesync-data
+    advancedMounts:
+      couchdb:
+        couchdb:
+          - path: /opt/couchdb/data
+  config:
+    type: configMap
+    name: obsidian-livesync-config
+    advancedMounts:
+      couchdb:
+        couchdb:
+          # 00- para que el 10-docker-default.ini del entrypoint quede ultimo
+          # y siga siendo el target de escritura de la API /_config.
+          - path: /opt/couchdb/etc/local.d/00-livesync.ini
+            subPath: 00-livesync.ini
+            readOnly: true
