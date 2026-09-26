@@ -4,6 +4,10 @@ controllers:
   qbittorrent:
     type: deployment
     strategy: Recreate
+    # fuera del mesh: las conexiones de torrent pasarian todas por el proxy
+    pod:
+      annotations:
+        linkerd.io/inject: disabled
     containers:
       qbittorrent:
         image:

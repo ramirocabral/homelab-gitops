@@ -23,6 +23,13 @@ resources:
 service:
   port: 8096
 
+# con linkerd un probe TCP siempre pasa (lo acepta el proxy), usar HTTP
+startupProbe:
+  tcpSocket: null
+  httpGet:
+    path: /health
+    port: http
+
 httpRoute:
   enabled: true
   parentRefs:
