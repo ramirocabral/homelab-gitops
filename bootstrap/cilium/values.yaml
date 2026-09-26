@@ -12,6 +12,10 @@ operator:
 l2announcements:
   enabled: true
 
+# linkerd: el socket LB resuelve el ClusterIP antes de que el proxy vea el Service
+socketLB:
+  hostNamespaceOnly: true
+
 k8sClientRateLimit:
   qps: 50
   burst: 100

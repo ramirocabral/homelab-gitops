@@ -1,0 +1,32 @@
+# ca.crt publico del trust anchor (el par completo esta sellado en workloads/linkerd)
+identityTrustAnchorsPEM: |
+  -----BEGIN CERTIFICATE-----
+  MIIBsjCCAVigAwIBAgIUIBqvlULtytWasofP1vpOHWzVFAwwCgYIKoZIzj0EAwIw
+  JTEjMCEGA1UEAwwacm9vdC5saW5rZXJkLmNsdXN0ZXIubG9jYWwwHhcNMjYwOTI2
+  MDQyNjA0WhcNMzYwOTIzMDQyNjA0WjAlMSMwIQYDVQQDDBpyb290LmxpbmtlcmQu
+  Y2x1c3Rlci5sb2NhbDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABLCGqpBNTHXH
+  SKA8qf0DNw8OhfpG3CY32gU4EzpjofE2G2h7nPi5Q35jA7DdGC1YrimnD+NOa9xG
+  We0Au/On3ZSjZjBkMB0GA1UdDgQWBBQbyKq5uS97NiUN5pErHBaTMZ7fvDAfBgNV
+  HSMEGDAWgBQbyKq5uS97NiUN5pErHBaTMZ7fvDASBgNVHRMBAf8ECDAGAQH/AgEB
+  MA4GA1UdDwEB/wQEAwIBBjAKBggqhkjOPQQDAgNIADBFAiBJpXJ+QlGyvfh/M3Vy
+  T2bE6vXwaKBHXYuhqDIiwuWOvQIhAK5q6FPFbQ/lZ8J5V4nJ9pw23rL1eHCHldaX
+  APa44uX8
+  -----END CERTIFICATE-----
+
+identity:
+  issuer:
+    scheme: kubernetes.io/tls
+
+# certs de los webhooks via cert-manager, sino el chart los regenera en cada render
+proxyInjector:
+  externalSecret: true
+  injectCaFrom: linkerd/linkerd-proxy-injector
+profileValidator:
+  externalSecret: true
+  injectCaFrom: linkerd/linkerd-sp-validator
+policyValidator:
+  externalSecret: true
+  injectCaFrom: linkerd/linkerd-policy-validator
+
+podMonitor:
+  enabled: true

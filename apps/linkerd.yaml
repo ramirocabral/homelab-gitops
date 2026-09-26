@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: linkerd
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  sources:
+    - repoURL: https://helm.linkerd.io/edge
+      chart: linkerd-control-plane
+      targetRevision: 2026.9.3
+      helm:
+        valueFiles:
+          - $repo/values/linkerd/values.yaml
+    - repoURL: https://github.com/ramirocabral/homelab-gitops.git
+      targetRevision: main
+      ref: repo
+    - repoURL: https://github.com/ramirocabral/homelab-gitops.git
+      targetRevision: main
+      path: workloads/linkerd
+  destination:
+    namespace: linkerd
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    # lo mismo que pone `linkerd install` (el chart no crea el namespace)
+    managedNamespaceMetadata:
+      labels:
+        linkerd.io/is-control-plane: "true"
+        linkerd.io/control-plane-ns: linkerd
+        config.linkerd.io/admission-webhooks: disabled
+        pod-security.kubernetes.io/enforce: privileged
+      annotations:
+        linkerd.io/inject: disabled
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    automated:
+      prune: true
+      selfHeal: true
