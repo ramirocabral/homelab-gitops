@@ -1,0 +1,16 @@
+# sin Prometheus propio, usa el de kube-prometheus-stack (scrapea los PodMonitors de linkerd)
+prometheusUrl: http://kube-prometheus-stack-prometheus.observability.svc.cluster.local:9090
+prometheus:
+  enabled: false
+
+createNamespaceMetadataJob: false
+
+dashboard:
+  enforcedHostRegexp: '^(linkerd\.lab\.cabral\.net\.ar|localhost|127\.0\.0\.1)(:\d+)?$'
+
+tap:
+  externalSecret: true
+  injectCaFrom: linkerd-viz/tap
+tapInjector:
+  externalSecret: true
+  injectCaFrom: linkerd-viz/linkerd-tap-injector

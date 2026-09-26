@@ -1,0 +1,17 @@
+# el dashboard no tiene auth
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: linkerd-viz
+  namespace: linkerd-viz
+spec:
+  parentRefs:
+    - name: shared
+      namespace: envoy-gateway-system
+      sectionName: https
+  hostnames:
+    - linkerd.lab.cabral.net.ar
+  rules:
+    - backendRefs:
+        - name: web
+          port: 8084

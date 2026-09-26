@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: linkerd-viz
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: default
+  sources:
+    - repoURL: https://helm.linkerd.io/edge
+      chart: linkerd-viz
+      targetRevision: 2026.9.3
+      helm:
+        valueFiles:
+          - $repo/values/linkerd-viz/values.yaml
+    - repoURL: https://github.com/ramirocabral/homelab-gitops.git
+      targetRevision: main
+      ref: repo
+    - repoURL: https://github.com/ramirocabral/homelab-gitops.git
+      targetRevision: main
+      path: workloads/linkerd-viz
+  destination:
+    namespace: linkerd-viz
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    # reemplaza al Job namespace-metadata del chart (hook de helm)
+    managedNamespaceMetadata:
+      labels:
+        linkerd.io/extension: viz
+        pod-security.kubernetes.io/enforce: privileged
+      annotations:
+        viz.linkerd.io/external-prometheus: http://kube-prometheus-stack-prometheus.observability.svc.cluster.local:9090
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    automated:
+      prune: true
+      selfHeal: true
