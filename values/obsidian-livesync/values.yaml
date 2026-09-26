@@ -1,3 +1,10 @@
+defaultPodOptions:
+  securityContext:
+    runAsUser: 5984
+    runAsGroup: 5984
+    fsGroup: 5984
+    fsGroupChangePolicy: OnRootMismatch
+
 controllers:
   couchdb:
     type: deployment
@@ -73,8 +80,7 @@ persistence:
     advancedMounts:
       couchdb:
         couchdb:
-          # 00- para que el 10-docker-default.ini del entrypoint quede ultimo
-          # y siga siendo el target de escritura de la API /_config.
+          # 00- deja docker.ini ultimo: es el target de escritura de /_config.
           - path: /opt/couchdb/etc/local.d/00-livesync.ini
             subPath: 00-livesync.ini
             readOnly: true
