@@ -1,0 +1,35 @@
+image:
+  tag: 0.1.0
+
+# La imagen es privada como el repo; el SealedSecret esta en workloads/plata.
+imagePullSecrets:
+  - name: ghcr-pull
+
+# Credenciales y todo lo personal (cuenta de Gmail, carpeta, fechas de inicio)
+# viven en este Secret, sellado en workloads/plata, y no en estos values.
+auth:
+  existingSecret: plata-secrets
+
+persistence:
+  data:
+    # Replicado: es la unica copia de lo que se carga a mano.
+    storageClass: ha-rwo
+    size: 2Gi
+    # Que ni borrar la Application ni un cambio de nombre se lleven la base.
+    annotations:
+      argocd.argoproj.io/sync-options: Delete=false,Prune=false
+
+httpRoute:
+  enabled: true
+  hostnames:
+    - plata.lab.cabral.net.ar
+  parentRefs:
+    - name: shared
+      namespace: envoy-gateway-system
+      sectionName: https
+
+metrics:
+  serviceMonitor:
+    enabled: true
+  prometheusRule:
+    enabled: true

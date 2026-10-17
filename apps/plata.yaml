@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: plata
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://github.com/ramirocabral/plata.git
+      targetRevision: main
+      path: deploy/charts/plata
+      helm:
+        valueFiles:
+          - $repo/values/plata/values.yaml
+    - repoURL: https://github.com/ramirocabral/homelab-gitops.git
+      targetRevision: main
+      ref: repo
+    - repoURL: https://github.com/ramirocabral/homelab-gitops.git
+      targetRevision: main
+      path: workloads/plata
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: plata
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      annotations:
+        linkerd.io/inject: enabled
