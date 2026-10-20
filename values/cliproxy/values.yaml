@@ -1,0 +1,78 @@
+defaultPodOptions:
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    fsGroupChangePolicy: OnRootMismatch
+
+controllers:
+  cliproxy:
+    type: deployment
+    strategy: Recreate
+    containers:
+      cliproxy:
+        image:
+          repository: eceasy/cli-proxy-api
+          tag: v8.0.35
+          pullPolicy: IfNotPresent
+        args: ["./CLIProxyAPI", "-config", "/config/config.yaml"]
+        env:
+          TZ: America/Argentina/Buenos_Aires
+          WRITABLE_PATH: /data
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /healthz
+                port: 8317
+              periodSeconds: 30
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /healthz
+                port: 8317
+              periodSeconds: 15
+        resources:
+          requests:
+            cpu: 20m
+            memory: 64Mi
+          limits:
+            memory: 512Mi
+
+service:
+  cliproxy:
+    controller: cliproxy
+    ports:
+      http:
+        port: 8317
+
+route:
+  cliproxy:
+    hostnames:
+      - cliproxy.lab.cabral.net.ar
+    parentRefs:
+      - name: shared
+        namespace: envoy-gateway-system
+        sectionName: https
+    rules:
+      - backendRefs:
+          - identifier: cliproxy
+            port: 8317
+        timeouts:
+          request: 0s
+
+persistence:
+  data:
+    existingClaim: cliproxy-data
+    globalMounts:
+      - path: /data
+  config:
+    type: secret
+    name: cliproxy-config
+    globalMounts:
+      - path: /config
+        readOnly: true

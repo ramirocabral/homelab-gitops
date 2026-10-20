@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cliproxy-data
+  namespace: cliproxy
+  annotations:
+    argocd.argoproj.io/sync-options: Delete=false,Prune=false
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: ha-rwo
+  resources:
+    requests:
+      storage: 1Gi
