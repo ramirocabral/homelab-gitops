@@ -1,0 +1,100 @@
+role: Agent
+
+image:
+  base: debian
+
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+
+resources:
+  requests:
+    cpu: 20m
+    memory: 64Mi
+  limits:
+    memory: 256Mi
+
+podMonitor:
+  enabled: true
+
+containerPorts:
+  - name: prom-exporter
+    containerPort: 9090
+    protocol: TCP
+
+service:
+  enabled: false
+
+customConfig:
+  data_dir: /vector-data-dir
+
+  sources:
+    pods:
+      type: kubernetes_logs
+    journal:
+      type: journald
+      journal_directory: /var/log/journal
+    vector_metrics:
+      type: internal_metrics
+
+  transforms:
+    pods_labels:
+      type: remap
+      inputs: [pods]
+      source: |
+        .namespace = .kubernetes.pod_namespace
+        .pod = .kubernetes.pod_name
+        .container = .kubernetes.container_name
+        .node = .kubernetes.pod_node_name
+        .app = .kubernetes.pod_labels."app.kubernetes.io/name" ||
+          .kubernetes.pod_labels.app ||
+          .kubernetes.pod_labels."k8s-app" ||
+          .container
+        .source = "pods"
+        if .app == "event-exporter" {
+          event, err = parse_json(.message)
+          if err == null && is_object(event.involvedObject) {
+            .source = "events"
+            ns = string(event.involvedObject.namespace) ?? ""
+            .namespace = if ns == "" { "cluster" } else { ns }
+          }
+        }
+    journal_labels:
+      type: remap
+      inputs: [journal]
+      source: |
+        .unit = ._SYSTEMD_UNIT || .SYSLOG_IDENTIFIER || "kernel"
+        .level = to_syslog_level(to_int(.PRIORITY) ?? 6) ?? "info"
+
+  sinks:
+    loki_pods:
+      type: loki
+      inputs: [pods_labels]
+      endpoint: http://loki.observability.svc.cluster.local:3100
+      encoding:
+        codec: text
+      labels:
+        source: '{{ "{{ source }}" }}'
+        namespace: '{{ "{{ namespace }}" }}'
+        pod: '{{ "{{ pod }}" }}'
+        container: '{{ "{{ container }}" }}'
+        node: '{{ "{{ node }}" }}'
+        app: '{{ "{{ app }}" }}'
+      out_of_order_action: accept
+    loki_journal:
+      type: loki
+      inputs: [journal_labels]
+      endpoint: http://loki.observability.svc.cluster.local:3100
+      encoding:
+        codec: text
+      labels:
+        source: journal
+        host: '{{ "{{ host }}" }}'
+        unit: '{{ "{{ unit }}" }}'
+        level: '{{ "{{ level }}" }}'
+      out_of_order_action: accept
+    prom_exporter:
+      type: prometheus_exporter
+      inputs: [vector_metrics]
+      address: 0.0.0.0:9090
