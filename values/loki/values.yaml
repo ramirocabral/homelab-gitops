@@ -40,7 +40,7 @@ singleBinary:
     - secretRef:
         name: loki-s3
   persistence:
-    storageClass: single-rwo
+    storageClass: single-rwo-nobackup
     size: 10Gi
   resources:
     requests:

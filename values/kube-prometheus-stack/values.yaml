@@ -45,7 +45,7 @@ prometheus:
     storageSpec:
       volumeClaimTemplate:
         spec:
-          storageClassName: single-rwo
+          storageClassName: single-rwo-nobackup
           accessModes: ["ReadWriteOnce"]
           resources:
             requests:
