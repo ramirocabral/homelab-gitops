@@ -65,7 +65,16 @@ customConfig:
       inputs: [journal]
       source: |
         .unit = ._SYSTEMD_UNIT || .SYSLOG_IDENTIFIER || "kernel"
-        .level = to_syslog_level(to_int(.PRIORITY) ?? 6) ?? "info"
+        .level = to_syslog_level(to_int(.PRIORITY || 6) ?? 6) ?? "info"
+        # k3s loguea todo con priority 6, el nivel real viene en el mensaje
+        if .level == "info" {
+          msg = string(.message) ?? ""
+          if match(msg, r'^[EF]\d{4} ') || match(msg, r'level=(error|fatal)') {
+            .level = "err"
+          } else if match(msg, r'^W\d{4} ') || match(msg, r'level=warn') {
+            .level = "warning"
+          }
+        }
 
   sinks:
     loki_pods:
