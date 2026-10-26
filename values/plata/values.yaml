@@ -1,5 +1,5 @@
 image:
-  tag: 0.1.0
+  tag: 0.1.1
 
 # La imagen es privada como el repo; el SealedSecret esta en workloads/plata.
 imagePullSecrets:
