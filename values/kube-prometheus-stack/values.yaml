@@ -137,9 +137,10 @@ alertmanager:
 
       {{ define "telegram.message" }}
       {{- if eq .Status "firing" }}🔴 <b>FIRING ({{ .Alerts.Firing | len }})</b>
-      {{- else }}🟢 <b>RESOLVED</b>
+      {{- else }}🟢 <b>RESOLVED ({{ .Alerts.Resolved | len }})</b>
       {{- end }} — {{ template "tg.esc" .CommonLabels.alertname }}
-      {{ range .Alerts }}
+      {{- /* telegram corta en 4096 chars: tope de 6 alertas por mensaje */}}
+      {{ range $i, $a := .Alerts.Firing }}{{ if lt $i 6 }}
       <b>{{ .Labels.severity | toUpper }}</b> {{ template "tg.esc" .Annotations.summary }}
       {{- with .Annotations.description }}
       {{ template "tg.esc" . }}
@@ -148,7 +149,16 @@ alertmanager:
       {{- with .Labels.pod }} <code>pod={{ . }}</code>{{ end }}
       {{- with .Labels.node }} <code>node={{ . }}</code>{{ end }}
       {{- with .Labels.persistentvolumeclaim }} <code>pvc={{ . }}</code>{{ end }}
+      {{ end }}{{ end }}
+      {{- if gt (len .Alerts.Firing) 6 }}
+      <i>Showing 6 of {{ len .Alerts.Firing }}</i>
       {{ end }}
+      {{- with .Alerts.Resolved }}
+      {{ range $i, $a := . }}{{ if lt $i 6 }}✅ {{ template "tg.esc" .Annotations.summary }}
+      {{ end }}{{ end }}
+      {{- if gt (len .) 6 }}<i>Showing 6 of {{ len . }} resolved</i>
+      {{ end }}
+      {{- end }}
       <a href="{{ .ExternalURL }}">Alertmanager</a>
       {{- end }}
 

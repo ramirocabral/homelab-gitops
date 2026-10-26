@@ -14,8 +14,8 @@ spec:
           labels:
             severity: critical
           annotations:
-            summary: 'Volumen Longhorn {{ $labels.pvc_namespace }}/{{ $labels.pvc }} en Faulted'
-            description: 'El volumen {{ $labels.volume }} esta Faulted hace mas de 5m en {{ $labels.node }}: ninguna replica utilizable, el workload no puede escribir.'
+            summary: 'Longhorn volume {{ $labels.pvc_namespace }}/{{ $labels.pvc }} is Faulted'
+            description: 'Volume {{ $labels.volume }} has been Faulted for over 5m on {{ $labels.node }}: no usable replica, the workload cannot write.'
 
         - alert: LonghornVolumeStatusWarning
           expr: longhorn_volume_robustness{state="degraded"} == 1
@@ -23,8 +23,8 @@ spec:
           labels:
             severity: warning
           annotations:
-            summary: 'Volumen Longhorn {{ $labels.pvc_namespace }}/{{ $labels.pvc }} en Degraded'
-            description: 'El volumen {{ $labels.volume }} esta Degraded hace mas de 5m en {{ $labels.node }}: corre con menos replicas de las pedidas.'
+            summary: 'Longhorn volume {{ $labels.pvc_namespace }}/{{ $labels.pvc }} is Degraded'
+            description: 'Volume {{ $labels.volume }} has been Degraded for over 5m on {{ $labels.node }}: running with fewer replicas than requested.'
 
         - alert: LonghornBackupFailed
           expr: longhorn_backup_state == 4
@@ -32,8 +32,8 @@ spec:
           labels:
             severity: critical
           annotations:
-            summary: 'Backup Longhorn fallido en el volumen {{ $labels.volume }}'
-            description: 'El backup {{ $labels.backup }} del recurring job {{ $labels.recurring_job }} quedo en Error.'
+            summary: 'Longhorn backup failed for volume {{ $labels.volume }}'
+            description: 'Backup {{ $labels.backup }} from recurring job {{ $labels.recurring_job }} ended in Error.'
 
         # si el recurring job ni siquiera corre no hay Backup en Error que detectar.
         - alert: LonghornBackupStale
@@ -42,8 +42,8 @@ spec:
           labels:
             severity: warning
           annotations:
-            summary: 'Sin backup de {{ $labels.pvc_namespace }}/{{ $labels.pvc }} hace mas de 26h'
-            description: 'El ultimo backup exitoso del volumen {{ $labels.volume }} fue hace {{ $value | humanizeDuration }}, y backup-daily corre a las 06:00.'
+            summary: 'No backup of {{ $labels.pvc_namespace }}/{{ $labels.pvc }} in over 26h'
+            description: 'Last successful backup was {{ $value | humanizeDuration }} ago; backup-daily runs at 06:00 UTC.'
 
         - alert: LonghornDiskNotSchedulable
           expr: longhorn_disk_status{condition="schedulable"} == 0
@@ -51,5 +51,5 @@ spec:
           labels:
             severity: warning
           annotations:
-            summary: 'Disco Longhorn {{ $labels.disk }} de {{ $labels.node }} no admite replicas'
-            description: 'Longhorn dejo de schedulear replicas en el disco: sin espacio reservable o over-provisioning al limite. Se rompen los rebuilds antes de que el filesystem se llene.'
+            summary: 'Longhorn disk {{ $labels.disk }} on {{ $labels.node }} is not schedulable'
+            description: 'Longhorn stopped scheduling replicas on this disk: no reservable space or over-provisioning at its limit. Rebuilds fail before the filesystem fills up.'
