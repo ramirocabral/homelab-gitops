@@ -9,3 +9,18 @@ spec:
     kubernetes:
       envoyService:
         externalTrafficPolicy: Cluster
+      envoyDeployment:
+        replicas: 2
+        pod:
+          # una replica por host de Proxmox
+          topologySpreadConstraints:
+            - maxSkew: 1
+              topologyKey: cabral.net.ar/pve-node
+              whenUnsatisfiable: DoNotSchedule
+              nodeTaintsPolicy: Honor
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: proxy
+                  gateway.envoyproxy.io/owning-gateway-name: shared
+      envoyPDB:
+        minAvailable: 1
