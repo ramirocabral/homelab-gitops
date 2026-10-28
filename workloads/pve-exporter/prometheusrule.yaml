@@ -35,14 +35,15 @@ spec:
             summary: 'Proxmox cluster {{ $labels.id }} has lost quorum'
             description: 'Running guests keep running, but starting, stopping, migrating and backing up guests are blocked until quorum returns.'
 
-        # solo los guests con onboot=1, los apagados a proposito no alertan
+        # solo los guests con onboot=1, los apagados a proposito no alertan.
+        # last_over_time: con el nodo caido PVE no reporta onboot ni el nombre de sus guests
         - alert: PveGuestDown
           expr: |
             (
               (max by (id) (pve_up{id=~"(qemu|lxc)/.+"}) == 0)
-              and on (id) (max by (id) (pve_onboot_status) == 1)
+              and on (id) (max by (id) (last_over_time(pve_onboot_status[1d])) == 1)
             )
-            * on (id) group_left (name, node) max by (id, name, node) (pve_guest_info)
+            * on (id) group_left (name, node) topk by (id) (1, last_over_time(pve_guest_info{name!=""}[1d]))
           for: 5m
           labels:
             severity: critical
@@ -67,7 +68,7 @@ spec:
               max by (id) (pve_disk_usage_bytes{id=~"lxc/.+"})
                 / (max by (id) (pve_disk_size_bytes{id=~"lxc/.+"}) > 0) > 0.9
             )
-            * on (id) group_left (name, node) max by (id, name, node) (pve_guest_info)
+            * on (id) group_left (name, node) topk by (id) (1, last_over_time(pve_guest_info{name!=""}[1d]))
           for: 30m
           labels:
             severity: warning
@@ -78,7 +79,7 @@ spec:
         - alert: PveGuestNotBackedUp
           expr: |
             max by (id) (pve_not_backed_up_info)
-              * on (id) group_left (name, node) max by (id, name, node) (pve_guest_info{template!="1"})
+              * on (id) group_left (name, node) topk by (id) (1, last_over_time(pve_guest_info{name!="", template="0"}[1d]))
           for: 1h
           labels:
             severity: warning
