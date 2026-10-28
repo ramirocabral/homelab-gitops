@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pve-exporter
+  namespace: observability
+  labels:
+    app.kubernetes.io/name: pve-exporter
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: pve-exporter
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: pve-exporter
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: pve-exporter
+          image: prompve/prometheus-pve-exporter:3.10.2
+          envFrom:
+            # PVE_USER, PVE_TOKEN_NAME, PVE_TOKEN_VALUE
+            - secretRef:
+                name: pve-exporter
+          env:
+            - name: PVE_VERIFY_SSL
+              value: "false"
+          ports:
+            - name: http
+              containerPort: 9221
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 192Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pve-exporter
+  namespace: observability
+  labels:
+    app.kubernetes.io/name: pve-exporter
+spec:
+  selector:
+    app.kubernetes.io/name: pve-exporter
+  ports:
+    - name: http
+      port: 9221
+      targetPort: http

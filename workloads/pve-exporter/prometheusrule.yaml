@@ -1,0 +1,87 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: pve
+  namespace: observability
+spec:
+  groups:
+    - name: pve
+      interval: 60s
+      rules:
+        - alert: PveScrapeFailed
+          expr: up{job="pve"} == 0
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Cannot scrape the Proxmox API on {{ $labels.instance }}'
+            description: 'pve-exporter has failed to query {{ $labels.instance }}:8006 for over 10m: node down, API down or token rejected.'
+
+        - alert: PveNodeDown
+          expr: max by (id) (pve_up{id=~"node/.+"}) == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: 'Proxmox node {{ $labels.id }} is offline'
+            description: 'The cluster has reported {{ $labels.id }} as offline for over 5m.'
+
+        - alert: PveClusterNotQuorate
+          expr: max by (id) (pve_cluster_info{quorate="0"}) == 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Proxmox cluster {{ $labels.id }} has lost quorum'
+            description: 'Running guests keep running, but starting, stopping, migrating and backing up guests are blocked until quorum returns.'
+
+        # solo los guests con onboot=1, los apagados a proposito no alertan
+        - alert: PveGuestDown
+          expr: |
+            (
+              (max by (id) (pve_up{id=~"(qemu|lxc)/.+"}) == 0)
+              and on (id) (max by (id) (pve_onboot_status) == 1)
+            )
+            * on (id) group_left (name, node) max by (id, name, node) (pve_guest_info)
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: 'Proxmox guest {{ $labels.name }} ({{ $labels.id }}) is not running'
+            description: '{{ $labels.name }} on {{ $labels.node }} has onboot=1 but has not been running for over 5m.'
+
+        - alert: PveStorageAlmostFull
+          expr: |
+            max by (id) (pve_disk_usage_bytes{id=~"storage/.+"})
+              / (max by (id) (pve_disk_size_bytes{id=~"storage/.+"}) > 0) > 0.85
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Proxmox storage {{ $labels.id }} is {{ $value | humanizePercentage }} full'
+            description: 'Storage {{ $labels.id }} has been over 85% used for 30m.'
+
+        - alert: PveContainerDiskAlmostFull
+          expr: |
+            (
+              max by (id) (pve_disk_usage_bytes{id=~"lxc/.+"})
+                / (max by (id) (pve_disk_size_bytes{id=~"lxc/.+"}) > 0) > 0.9
+            )
+            * on (id) group_left (name, node) max by (id, name, node) (pve_guest_info)
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Root disk of {{ $labels.name }} ({{ $labels.id }}) is {{ $value | humanizePercentage }} full'
+            description: 'The rootfs of container {{ $labels.name }} on {{ $labels.node }} has been over 90% used for 30m.'
+
+        - alert: PveGuestNotBackedUp
+          expr: |
+            max by (id) (pve_not_backed_up_info)
+              * on (id) group_left (name, node) max by (id, name, node) (pve_guest_info{template!="1"})
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Proxmox guest {{ $labels.name }} ({{ $labels.id }}) is not covered by any backup job'
+            description: '{{ $labels.name }} on {{ $labels.node }} is not in any backup job; add it to the prod pool.'

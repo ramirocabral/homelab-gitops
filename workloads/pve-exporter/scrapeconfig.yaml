@@ -1,0 +1,25 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: pve
+  namespace: observability
+spec:
+  jobName: pve
+  metricsPath: /pve
+  scrapeTimeout: 30s
+  params:
+    module: [default]
+    cluster: ["1"]
+    node: ["1"]
+  # los dos nodos devuelven las metricas de cluster duplicadas (distinto instance)
+  staticConfigs:
+    - targets:
+        - 192.168.9.7
+        - 192.168.9.8
+  relabelings:
+    - sourceLabels: [__address__]
+      targetLabel: __param_target
+    - sourceLabels: [__param_target]
+      targetLabel: instance
+    - targetLabel: __address__
+      replacement: pve-exporter.observability.svc:9221
