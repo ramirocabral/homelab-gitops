@@ -2,7 +2,7 @@
 
 > Generado por `scripts/gen-alerting-doc.py` desde el chart `kube-prometheus-stack 88.3.0` y `values/kube-prometheus-stack/values.yaml`.
 
-**139 alertas** (critical: 34 · warning: 96 · info: 7 · none: 2) y **96 recording rules**, repartidas en 32 objetos `PrometheusRule`: 30 los genera el chart, 2 son propios del repo.
+**146 alertas** (critical: 36 · warning: 101 · info: 7 · none: 2) y **96 recording rules**, repartidas en 33 objetos `PrometheusRule`: 30 los genera el chart, 3 son propios del repo.
 
 ## Ruteo
 
@@ -10,6 +10,7 @@ Primera coincidencia gana: una alerta cae en **una sola** rama.
 
 - **raiz** → `telegram`  · group_by=alertname,namespace · group_wait=30s · group_interval=5m · repeat_interval=6h
   - **alertname =~ "Watchdog|InfoInhibitor"** → `null`
+  - **alertname = "TargetDown"** → `telegram`  · group_by=alertname
   - **severity = "critical"** → `telegram`  · repeat_interval=1h
 
 ## Receivers
@@ -46,9 +47,10 @@ Silencian la alerta *target* mientras exista la *source* con las mismas labels d
 
 {{ define "telegram.message" }}
 {{- if eq .Status "firing" }}🔴 <b>FIRING ({{ .Alerts.Firing | len }})</b>
-{{- else }}🟢 <b>RESOLVED</b>
+{{- else }}🟢 <b>RESOLVED ({{ .Alerts.Resolved | len }})</b>
 {{- end }} — {{ template "tg.esc" .CommonLabels.alertname }}
-{{ range .Alerts }}
+{{- /* telegram corta en 4096 chars: tope de 6 alertas por mensaje */}}
+{{ range $i, $a := .Alerts.Firing }}{{ if lt $i 6 }}
 <b>{{ .Labels.severity | toUpper }}</b> {{ template "tg.esc" .Annotations.summary }}
 {{- with .Annotations.description }}
 {{ template "tg.esc" . }}
@@ -57,7 +59,16 @@ Silencian la alerta *target* mientras exista la *source* con las mismas labels d
 {{- with .Labels.pod }} <code>pod={{ . }}</code>{{ end }}
 {{- with .Labels.node }} <code>node={{ . }}</code>{{ end }}
 {{- with .Labels.persistentvolumeclaim }} <code>pvc={{ . }}</code>{{ end }}
+{{ end }}{{ end }}
+{{- if gt (len .Alerts.Firing) 6 }}
+<i>Showing 6 of {{ len .Alerts.Firing }}</i>
 {{ end }}
+{{- with .Alerts.Resolved }}
+{{ range $i, $a := . }}{{ if lt $i 6 }}✅ {{ template "tg.esc" .Annotations.summary }}
+{{ end }}{{ end }}
+{{- if gt (len .) 6 }}<i>Showing 6 of {{ len . }} resolved</i>
+{{ end }}
+{{- end }}
 <a href="{{ .ExternalURL }}">Alertmanager</a>
 {{- end }}
 ```
@@ -102,6 +113,8 @@ Silencian la alerta *target* mientras exista la *source* con las mismas labels d
 | [PrometheusRemoteWriteBehind](#prometheusremotewritebehind) | `critical` | `15m` | prometheus |
 | [PrometheusRuleFailures](#prometheusrulefailures) | `critical` | `15m` | prometheus |
 | [PrometheusTargetSyncFailure](#prometheustargetsyncfailure) | `critical` | `5m` | prometheus |
+| [PveGuestDown](#pveguestdown) | `critical` | `5m` | pve |
+| [PveNodeDown](#pvenodedown) | `critical` | `5m` | pve |
 | [AlertmanagerClusterFailedPeers](#alertmanagerclusterfailedpeers) | `warning` | `15m` | alertmanager.rules |
 | [AlertmanagerClusterFailedToSendAlerts](#alertmanagerclusterfailedtosendalerts) | `warning` | `5m` | alertmanager.rules |
 | [AlertmanagerFailedToSendAlerts](#alertmanagerfailedtosendalerts) | `warning` | `5m` | alertmanager.rules |
@@ -197,6 +210,11 @@ Silencian la alerta *target* mientras exista la *source* con las mismas labels d
 | [PrometheusTSDBCompactionsFailing](#prometheustsdbcompactionsfailing) | `warning` | `4h` | prometheus |
 | [PrometheusTSDBReloadsFailing](#prometheustsdbreloadsfailing) | `warning` | `4h` | prometheus |
 | [PrometheusTargetLimitHit](#prometheustargetlimithit) | `warning` | `15m` | prometheus |
+| [PveClusterNotQuorate](#pveclusternotquorate) | `warning` | `5m` | pve |
+| [PveContainerDiskAlmostFull](#pvecontainerdiskalmostfull) | `warning` | `30m` | pve |
+| [PveGuestNotBackedUp](#pveguestnotbackedup) | `warning` | `1h` | pve |
+| [PveScrapeFailed](#pvescrapefailed) | `warning` | `10m` | pve |
+| [PveStorageAlmostFull](#pvestoragealmostfull) | `warning` | `30m` | pve |
 | [TargetDown](#targetdown) | `warning` | `10m` | general.rules |
 | [CPUThrottlingHigh](#cputhrottlinghigh) | `info` | `15m` | kubernetes-resources |
 | [KubeNodeEviction](#kubenodeeviction) | `info` | `0s` | kubernetes-system-kubelet |
@@ -1022,7 +1040,7 @@ Kubelet is running at capacity.
 
 `critical` · `for: 5m`
 
-Backup Longhorn fallido en el volumen {{ $labels.volume }}
+Longhorn backup failed for volume {{ $labels.volume }}
 
 ```promql
 longhorn_backup_state == 4
@@ -1032,7 +1050,7 @@ longhorn_backup_state == 4
 
 `critical` · `for: 5m`
 
-Volumen Longhorn {{ $labels.pvc_namespace }}/{{ $labels.pvc }} en Faulted
+Longhorn volume {{ $labels.pvc_namespace }}/{{ $labels.pvc }} is Faulted
 
 ```promql
 longhorn_volume_robustness{state="faulted"} == 1
@@ -1042,7 +1060,7 @@ longhorn_volume_robustness{state="faulted"} == 1
 
 `warning` · `for: 30m`
 
-Sin backup de {{ $labels.pvc_namespace }}/{{ $labels.pvc }} hace mas de 26h
+No backup of {{ $labels.pvc_namespace }}/{{ $labels.pvc }} in over 26h
 
 ```promql
 (time() - longhorn_volume_last_backup_at) > 26 * 3600 and longhorn_volume_last_backup_at > 0
@@ -1052,7 +1070,7 @@ Sin backup de {{ $labels.pvc_namespace }}/{{ $labels.pvc }} hace mas de 26h
 
 `warning` · `for: 15m`
 
-Disco Longhorn {{ $labels.disk }} de {{ $labels.node }} no admite replicas
+Longhorn disk {{ $labels.disk }} on {{ $labels.node }} is not schedulable
 
 ```promql
 longhorn_disk_status{condition="schedulable"} == 0
@@ -1062,7 +1080,7 @@ longhorn_disk_status{condition="schedulable"} == 0
 
 `warning` · `for: 5m`
 
-Volumen Longhorn {{ $labels.pvc_namespace }}/{{ $labels.pvc }} en Degraded
+Longhorn volume {{ $labels.pvc_namespace }}/{{ $labels.pvc }} is Degraded
 
 ```promql
 longhorn_volume_robustness{state="degraded"} == 1
@@ -1662,6 +1680,80 @@ Errors while performing watch operations in controller.
 
 ```promql
 (sum by (cluster,controller,namespace) (rate(prometheus_operator_watch_operations_failed_total{job="kps-kube-prometheus-stack-operator",namespace="observability"}[5m])) / sum by (cluster,controller,namespace) (rate(prometheus_operator_watch_operations_total{job="kps-kube-prometheus-stack-operator",namespace="observability"}[5m]))) > 0.4
+```
+
+#### pve
+
+<sub>PrometheusRule: `workloads/pve-exporter/prometheusrule.yaml` (propio del repo)</sub>
+
+##### PveGuestDown
+
+`critical` · `for: 5m`
+
+Proxmox guest {{ $labels.name }} ({{ $labels.id }}) is not running
+
+```promql
+( (max by (id) (pve_up{id=~"(qemu|lxc)/.+"}) == 0) and on (id) (max by (id) (last_over_time(pve_onboot_status[1d])) == 1) ) * on (id) group_left (name, node) topk by (id) (1, last_over_time(pve_guest_info{name!=""}[1d]))
+```
+
+##### PveNodeDown
+
+`critical` · `for: 5m`
+
+Proxmox node {{ $labels.id }} is offline
+
+```promql
+max by (id) (pve_up{id=~"node/.+"}) == 0
+```
+
+##### PveClusterNotQuorate
+
+`warning` · `for: 5m`
+
+Proxmox cluster {{ $labels.id }} has lost quorum
+
+```promql
+max by (id) (pve_cluster_info{quorate="0"}) == 1
+```
+
+##### PveContainerDiskAlmostFull
+
+`warning` · `for: 30m`
+
+Root disk of {{ $labels.name }} ({{ $labels.id }}) is {{ $value | humanizePercentage }} full
+
+```promql
+( max by (id) (pve_disk_usage_bytes{id=~"lxc/.+"}) / (max by (id) (pve_disk_size_bytes{id=~"lxc/.+"}) > 0) > 0.9 ) * on (id) group_left (name, node) topk by (id) (1, last_over_time(pve_guest_info{name!=""}[1d]))
+```
+
+##### PveGuestNotBackedUp
+
+`warning` · `for: 1h`
+
+Proxmox guest {{ $labels.name }} ({{ $labels.id }}) is not covered by any backup job
+
+```promql
+max by (id) (pve_not_backed_up_info) * on (id) group_left (name, node) topk by (id) (1, last_over_time(pve_guest_info{name!="", template="0"}[1d]))
+```
+
+##### PveScrapeFailed
+
+`warning` · `for: 10m`
+
+Cannot scrape the Proxmox API on {{ $labels.instance }}
+
+```promql
+up{job="pve"} == 0
+```
+
+##### PveStorageAlmostFull
+
+`warning` · `for: 30m`
+
+Proxmox storage {{ $labels.id }} is {{ $value | humanizePercentage }} full
+
+```promql
+max by (id) (pve_disk_usage_bytes{id=~"storage/.+"}) / (max by (id) (pve_disk_size_bytes{id=~"storage/.+"}) > 0) > 0.85
 ```
 
 ## Recording rules

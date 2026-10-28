@@ -105,6 +105,11 @@ alertmanager:
         - receiver: "null"
           matchers:
             - alertname =~ "Watchdog|InfoInhibitor"
+        # un mensaje para todos los namespaces en vez de uno por namespace
+        - receiver: telegram
+          matchers:
+            - alertname = "TargetDown"
+          group_by: [alertname]
         - receiver: telegram
           matchers:
             - severity = "critical"
