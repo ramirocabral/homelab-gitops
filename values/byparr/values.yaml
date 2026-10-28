@@ -1,0 +1,42 @@
+controllers:
+  byparr:
+    type: deployment
+    strategy: Recreate
+    containers:
+      byparr:
+        image:
+          repository: ghcr.io/thephaseless/byparr
+          tag: v3.0.4
+          pullPolicy: IfNotPresent
+        env:
+          TZ: America/Argentina/Buenos_Aires
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /docs  # /health abre un navegador
+                port: 8191
+              periodSeconds: 30
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /docs
+                port: 8191
+              periodSeconds: 15
+        resources:
+          requests:
+            cpu: 10m
+            memory: 256Mi
+          limits:
+            memory: 1536Mi
+
+service:
+  app:
+    controller: byparr
+    ports:
+      http:
+        port: 8191
