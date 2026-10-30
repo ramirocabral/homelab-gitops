@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: authelia-data
+  namespace: authelia
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: single-rwo
+  resources:
+    requests:
+      storage: 1Gi

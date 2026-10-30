@@ -1,0 +1,32 @@
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: authelia
+  namespace: longhorn-system
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: longhorn-httproute
+  extAuth:
+    failOpen: false
+    headersToExtAuth:
+      - accept
+      - sec-fetch-mode
+      - sec-fetch-dest
+      - x-requested-with
+      - cookie
+      - authorization
+      - proxy-authorization
+      - x-forwarded-proto
+    http:
+      backendRefs:
+        - name: authelia
+          namespace: authelia
+          port: 9091
+      path: /api/authz/ext-authz/
+      headersToBackend:
+        - Remote-User
+        - Remote-Groups
+        - Remote-Name
+        - Remote-Email

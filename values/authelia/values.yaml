@@ -1,0 +1,123 @@
+controllers:
+  authelia:
+    type: deployment
+    strategy: Recreate
+    pod:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+    containers:
+      authelia:
+        image:
+          repository: ghcr.io/authelia/authelia
+          tag: "4.39.28"
+          pullPolicy: IfNotPresent
+        env:
+          TZ: America/Argentina/Buenos_Aires
+          X_AUTHELIA_CONFIG: /etc/authelia/configuration.yml
+          AUTHELIA_SESSION_SECRET_FILE: /secrets/app/session_secret
+          AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE: /secrets/app/storage_encryption_key
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /api/health
+                port: 9091
+              periodSeconds: 30
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /api/health
+                port: 9091
+              periodSeconds: 10
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 512Mi
+
+configMaps:
+  configuration:
+    data:
+      configuration.yml: |
+        theme: auto
+        server:
+          address: tcp://:9091/
+        log:
+          level: info
+        totp:
+          issuer: lab.cabral.net.ar
+        authentication_backend:
+          password_reset:
+            disable: true
+          password_change:
+            disable: true
+          file:
+            path: /secrets/users/users_database.yml
+        access_control:
+          default_policy: deny
+          rules:
+            - domain: "*.lab.cabral.net.ar"
+              policy: one_factor
+        session:
+          cookies:
+            - domain: lab.cabral.net.ar
+              authelia_url: https://auth.lab.cabral.net.ar
+        storage:
+          local:
+            path: /config/db.sqlite3
+        notifier:
+          filesystem:
+            filename: /config/notification.txt
+
+service:
+  authelia:
+    controller: authelia
+    ports:
+      http:
+        port: 9091
+
+route:
+  authelia:
+    hostnames:
+      - auth.lab.cabral.net.ar
+    parentRefs:
+      - name: shared
+        namespace: envoy-gateway-system
+        sectionName: https
+    rules:
+      - backendRefs:
+          - identifier: authelia
+            port: 9091
+
+persistence:
+  configuration:
+    type: configMap
+    identifier: configuration
+    globalMounts:
+      - path: /etc/authelia
+        readOnly: true
+  data:
+    existingClaim: authelia-data
+    globalMounts:
+      - path: /config
+  secrets:
+    type: secret
+    name: authelia-secrets
+    globalMounts:
+      - path: /secrets/app
+        readOnly: true
+  users:
+    type: secret
+    name: authelia-users
+    globalMounts:
+      - path: /secrets/users
+        readOnly: true
