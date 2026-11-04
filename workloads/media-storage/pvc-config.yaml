@@ -69,3 +69,15 @@ spec:
   resources:
     requests:
       storage: 20Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: seerr-config
+  namespace: media
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: single-rwo
+  resources:
+    requests:
+      storage: 5Gi
