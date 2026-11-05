@@ -1,0 +1,14 @@
+# kubectl -n argocd patch cm argocd-cm --patch-file bootstrap/argocd/oidc-cm.patch.yaml
+data:
+  url: https://argocd.lab.cabral.net.ar
+  oidc.config: |
+    name: Authelia
+    issuer: https://auth.lab.cabral.net.ar
+    clientID: argocd
+    clientSecret: $argocd-authelia-oidc:clientSecret
+    requestedScopes:
+      - openid
+      - email
+      - groups
+    enableUserInfoGroups: true
+    userInfoPath: /api/oidc/userinfo

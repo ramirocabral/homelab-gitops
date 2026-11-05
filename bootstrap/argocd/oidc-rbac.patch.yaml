@@ -1,0 +1,4 @@
+# kubectl -n argocd patch cm argocd-rbac-cm --patch-file bootstrap/argocd/oidc-rbac.patch.yaml
+data:
+  policy.csv: |
+    g, admins, role:admin

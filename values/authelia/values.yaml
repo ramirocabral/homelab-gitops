@@ -18,6 +18,8 @@ controllers:
         env:
           TZ: America/Argentina/Buenos_Aires
           X_AUTHELIA_CONFIG: /etc/authelia/configuration.yml
+          X_AUTHELIA_CONFIG_FILTERS: template
+          AUTHELIA_IDENTITY_PROVIDERS_OIDC_HMAC_SECRET_FILE: /secrets/oidc/hmac_secret
           AUTHELIA_SESSION_SECRET_FILE: /secrets/app/session_secret
           AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE: /secrets/app/storage_encryption_key
         probes:
@@ -77,6 +79,34 @@ configMaps:
         notifier:
           filesystem:
             filename: /config/notification.txt
+        identity_providers:
+          oidc:
+            jwks:
+              - key_id: main
+                algorithm: RS256
+                use: sig
+                key: {{ "{{" }} secret "/secrets/oidc/jwks_rsa_key" | mindent 10 "|" | msquote {{ "}}" }}
+            clients:
+              - client_id: argocd
+                client_name: Argo CD
+                client_secret: {{ "{{" }} secret "/secrets/oidc/argocd_client_secret_digest" | msquote {{ "}}" }}
+                public: false
+                authorization_policy: one_factor
+                require_pkce: false
+                pkce_challenge_method: ''
+                redirect_uris:
+                  - https://argocd.lab.cabral.net.ar/auth/callback
+                scopes:
+                  - openid
+                  - groups
+                  - email
+                response_types:
+                  - code
+                grant_types:
+                  - authorization_code
+                access_token_signed_response_alg: none
+                userinfo_signed_response_alg: none
+                token_endpoint_auth_method: client_secret_basic
 
 service:
   authelia:
@@ -114,6 +144,12 @@ persistence:
     name: authelia-secrets
     globalMounts:
       - path: /secrets/app
+        readOnly: true
+  oidc:
+    type: secret
+    name: authelia-oidc
+    globalMounts:
+      - path: /secrets/oidc
         readOnly: true
   users:
     type: secret
