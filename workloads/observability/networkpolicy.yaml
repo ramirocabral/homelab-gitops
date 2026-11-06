@@ -22,24 +22,6 @@ spec:
             matchLabels:
               kubernetes.io/metadata.name: envoy-gateway-system
 ---
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-linkerd-viz
-  namespace: observability
-spec:
-  podSelector:
-    matchLabels:
-      app.kubernetes.io/name: prometheus
-  policyTypes: [Ingress]
-  ingress:
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: linkerd-viz
-      ports:
-        - port: 9090
----
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:

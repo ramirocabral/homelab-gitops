@@ -24,12 +24,6 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: observability
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: linkerd-viz
-      ports:
-        - port: 4190
 ---
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
