@@ -2,6 +2,21 @@ controllers:
   bazarr:
     type: deployment
     strategy: Recreate
+    initContainers:
+      wait-arr:
+        image:
+          repository: lscr.io/linuxserver/bazarr
+          tag: "1.6.0"
+          pullPolicy: IfNotPresent
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            for i in $(seq 60); do
+              wget -q -T 3 -O /dev/null http://radarr:7878/ping &&
+                wget -q -T 3 -O /dev/null http://sonarr:8989/ping && exit 0
+              sleep 5
+            done
+            echo "radarr/sonarr not ready, starting anyway"
     containers:
       bazarr:
         image:
