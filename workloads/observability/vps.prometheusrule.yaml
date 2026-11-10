@@ -1,0 +1,38 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: vps
+  namespace: observability
+spec:
+  groups:
+    - name: vps
+      interval: 60s
+      rules:
+        - alert: VpsUnreachable
+          expr: up{job="vps-node"} == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: 'The VPS is unreachable over the WireGuard tunnel'
+            description: 'node-exporter on the VPS has not answered for 5m'
+
+        - alert: GatusDown
+          expr: up{job="vps-gatus"} == 0 and on () up{job="vps-node"} == 1
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: 'Gatus is down on the VPS'
+            description: 'The VPS answers but Gatus does not'
+
+        - alert: VpsFilesystemAlmostFull
+          expr: |
+            node_filesystem_avail_bytes{job="vps-node",fstype=~"xfs|ext4"}
+              / node_filesystem_size_bytes{job="vps-node",fstype=~"xfs|ext4"} < 0.10
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'VPS filesystem {{ $labels.mountpoint }} is almost full'
+            description: '{{ $labels.mountpoint }} has {{ $value | humanizePercentage }} free.'

@@ -1,0 +1,27 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: vps-node
+  namespace: observability
+spec:
+  jobName: vps-node
+  staticConfigs:
+    - targets:
+        - 192.168.11.2:9100
+  relabelings:
+    - targetLabel: instance
+      replacement: vps
+---
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: vps-gatus
+  namespace: observability
+spec:
+  jobName: vps-gatus
+  staticConfigs:
+    - targets:
+        - 192.168.11.2:8080
+  relabelings:
+    - targetLabel: instance
+      replacement: vps

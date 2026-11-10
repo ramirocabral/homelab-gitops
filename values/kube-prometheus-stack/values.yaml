@@ -73,9 +73,10 @@ prometheus:
 alertmanager:
   alertmanagerSpec:
     externalUrl: https://alertmanager.lab.cabral.net.ar
-    # se monta en /etc/alertmanager/secrets/alertmanager-telegram/
+    # se montan en /etc/alertmanager/secrets/<nombre>/
     secrets:
       - alertmanager-telegram
+      - alertmanager-gatus
     storage:
       volumeClaimTemplate:
         spec:
@@ -102,9 +103,15 @@ alertmanager:
       group_interval: 5m
       repeat_interval: 6h
       routes:
+        - receiver: gatus-heartbeat
+          matchers:
+            - alertname = "Watchdog"
+          group_wait: 0s
+          group_interval: 1m
+          repeat_interval: 1m
         - receiver: "null"
           matchers:
-            - alertname =~ "Watchdog|InfoInhibitor"
+            - alertname = "InfoInhibitor"
         # un mensaje para todos los namespaces en vez de uno por namespace
         - receiver: telegram
           matchers:
@@ -117,6 +124,13 @@ alertmanager:
 
     receivers:
       - name: "null"
+      - name: gatus-heartbeat
+        webhook_configs:
+          - url: http://192.168.11.2:8080/api/v1/endpoints/home_alertmanager-watchdog/external?success=true
+            send_resolved: false
+            http_config:
+              authorization:
+                credentials_file: /etc/alertmanager/secrets/alertmanager-gatus/token
       - name: telegram
         telegram_configs:
           - bot_token_file: /etc/alertmanager/secrets/alertmanager-telegram/bot-token

@@ -2,14 +2,15 @@
 
 > Generado por `scripts/gen-alerting-doc.py` desde el chart `kube-prometheus-stack 88.3.0` y `values/kube-prometheus-stack/values.yaml`.
 
-**146 alertas** (critical: 36 · warning: 101 · info: 7 · none: 2) y **96 recording rules**, repartidas en 33 objetos `PrometheusRule`: 30 los genera el chart, 3 son propios del repo.
+**149 alertas** (critical: 38 · warning: 102 · info: 7 · none: 2) y **96 recording rules**, repartidas en 34 objetos `PrometheusRule`: 30 los genera el chart, 4 son propios del repo.
 
 ## Ruteo
 
 Primera coincidencia gana: una alerta cae en **una sola** rama.
 
 - **raiz** → `telegram`  · group_by=alertname,namespace · group_wait=30s · group_interval=5m · repeat_interval=6h
-  - **alertname =~ "Watchdog|InfoInhibitor"** → `null`
+  - **alertname = "Watchdog"** → `gatus-heartbeat`  · group_wait=0s · group_interval=1m · repeat_interval=1m
+  - **alertname = "InfoInhibitor"** → `null`
   - **alertname = "TargetDown"** → `telegram`  · group_by=alertname
   - **severity = "critical"** → `telegram`  · repeat_interval=1h
 
@@ -18,6 +19,13 @@ Primera coincidencia gana: una alerta cae en **una sola** rama.
 ### `null`
 
 Sin destino: descarta la alerta a propósito.
+
+### `gatus-heartbeat`
+
+- tipo: **webhook**
+  - `http_config`: `{'authorization': {'credentials_file': '/etc/alertmanager/secrets/alertmanager-gatus/token'}}`
+  - `send_resolved`: `False`
+  - `url`: `http://192.168.11.2:8080/api/v1/endpoints/home_alertmanager-watchdog/external?success=true`
 
 ### `telegram`
 
@@ -85,6 +93,7 @@ Silencian la alerta *target* mientras exista la *source* con las mismas labels d
 | [AlertmanagerConfigInconsistent](#alertmanagerconfiginconsistent) | `critical` | `20m` | alertmanager.rules |
 | [AlertmanagerFailedReload](#alertmanagerfailedreload) | `critical` | `10m` | alertmanager.rules |
 | [AlertmanagerMembersInconsistent](#alertmanagermembersinconsistent) | `critical` | `15m` | alertmanager.rules |
+| [GatusDown](#gatusdown) | `critical` | `5m` | vps |
 | [KubeAPIDown](#kubeapidown) | `critical` | `15m` | kubernetes-system-apiserver |
 | [KubeAPIErrorBudgetBurn](#kubeapierrorbudgetburn) | `critical` | `2m` | kube-apiserver-slos |
 | [KubeAPIErrorBudgetBurn](#kubeapierrorbudgetburn) | `critical` | `15m` | kube-apiserver-slos |
@@ -115,6 +124,7 @@ Silencian la alerta *target* mientras exista la *source* con las mismas labels d
 | [PrometheusTargetSyncFailure](#prometheustargetsyncfailure) | `critical` | `5m` | prometheus |
 | [PveGuestDown](#pveguestdown) | `critical` | `5m` | pve |
 | [PveNodeDown](#pvenodedown) | `critical` | `5m` | pve |
+| [VpsUnreachable](#vpsunreachable) | `critical` | `5m` | vps |
 | [AlertmanagerClusterFailedPeers](#alertmanagerclusterfailedpeers) | `warning` | `15m` | alertmanager.rules |
 | [AlertmanagerClusterFailedToSendAlerts](#alertmanagerclusterfailedtosendalerts) | `warning` | `5m` | alertmanager.rules |
 | [AlertmanagerFailedToSendAlerts](#alertmanagerfailedtosendalerts) | `warning` | `5m` | alertmanager.rules |
@@ -216,6 +226,7 @@ Silencian la alerta *target* mientras exista la *source* con las mismas labels d
 | [PveScrapeFailed](#pvescrapefailed) | `warning` | `10m` | pve |
 | [PveStorageAlmostFull](#pvestoragealmostfull) | `warning` | `30m` | pve |
 | [TargetDown](#targetdown) | `warning` | `10m` | general.rules |
+| [VpsFilesystemAlmostFull](#vpsfilesystemalmostfull) | `warning` | `30m` | vps |
 | [CPUThrottlingHigh](#cputhrottlinghigh) | `info` | `15m` | kubernetes-resources |
 | [KubeNodeEviction](#kubenodeeviction) | `info` | `0s` | kubernetes-system-kubelet |
 | [KubeNodePressure](#kubenodepressure) | `info` | `10m` | kubernetes-system-kubelet |
@@ -1754,6 +1765,40 @@ Proxmox storage {{ $labels.id }} is {{ $value | humanizePercentage }} full
 
 ```promql
 max by (id) (pve_disk_usage_bytes{id=~"storage/.+"}) / (max by (id) (pve_disk_size_bytes{id=~"storage/.+"}) > 0) > 0.85
+```
+
+#### vps
+
+<sub>PrometheusRule: `workloads/observability/vps.prometheusrule.yaml` (propio del repo)</sub>
+
+##### GatusDown
+
+`critical` · `for: 5m`
+
+Gatus is down on the VPS
+
+```promql
+up{job="vps-gatus"} == 0 and on () up{job="vps-node"} == 1
+```
+
+##### VpsUnreachable
+
+`critical` · `for: 5m`
+
+The VPS is unreachable over the WireGuard tunnel
+
+```promql
+up{job="vps-node"} == 0
+```
+
+##### VpsFilesystemAlmostFull
+
+`warning` · `for: 30m`
+
+VPS filesystem {{ $labels.mountpoint }} is almost full
+
+```promql
+node_filesystem_avail_bytes{job="vps-node",fstype=~"xfs|ext4"} / node_filesystem_size_bytes{job="vps-node",fstype=~"xfs|ext4"} < 0.10
 ```
 
 ## Recording rules
