@@ -1,0 +1,83 @@
+defaultPodOptions:
+  securityContext:
+    runAsUser: 65534
+    runAsGroup: 65534
+    runAsNonRoot: true
+    fsGroup: 65534
+    fsGroupChangePolicy: OnRootMismatch
+
+controllers:
+  webdav:
+    type: deployment
+    strategy: Recreate
+    containers:
+      webdav:
+        image:
+          repository: ghcr.io/hacdias/webdav
+          tag: v5.17.3
+          pullPolicy: IfNotPresent
+        args: ["-c", "/config/config.yml"]
+        envFrom:
+          - secretRef:
+              name: bookmarks-secrets
+        # Todo pide auth y con Linkerd un probe TCP siempre pasa.
+        probes:
+          liveness:
+            enabled: false
+          readiness:
+            enabled: false
+          startup:
+            enabled: false
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
+
+service:
+  webdav:
+    controller: webdav
+    ports:
+      http:
+        port: 6065
+
+route:
+  webdav:
+    hostnames:
+      - bookmarks.lab.cabral.net.ar
+    parentRefs:
+      - name: shared
+        namespace: envoy-gateway-system
+        sectionName: https
+    rules:
+      - backendRefs:
+          - identifier: webdav
+            port: 6065
+
+persistence:
+  data:
+    existingClaim: bookmarks-data
+    advancedMounts:
+      webdav:
+        webdav:
+          - path: /data
+  config:
+    type: configMap
+    name: bookmarks-config
+    advancedMounts:
+      webdav:
+        webdav:
+          - path: /config
+            readOnly: true
+  tmp:
+    type: emptyDir
+    advancedMounts:
+      webdav:
+        webdav:
+          - path: /tmp
