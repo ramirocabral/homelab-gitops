@@ -2,7 +2,7 @@
 
 > Generado por `scripts/gen-alerting-doc.py` desde el chart `kube-prometheus-stack 88.3.0` y `values/kube-prometheus-stack/values.yaml`.
 
-**149 alertas** (critical: 38 · warning: 102 · info: 7 · none: 2) y **96 recording rules**, repartidas en 34 objetos `PrometheusRule`: 30 los genera el chart, 4 son propios del repo.
+**168 alertas** (critical: 41 · warning: 118 · info: 7 · none: 2) y **96 recording rules**, repartidas en 38 objetos `PrometheusRule`: 30 los genera el chart, 8 son propios del repo.
 
 ## Ruteo
 
@@ -93,6 +93,8 @@ Silencian la alerta *target* mientras exista la *source* con las mismas labels d
 | [AlertmanagerConfigInconsistent](#alertmanagerconfiginconsistent) | `critical` | `20m` | alertmanager.rules |
 | [AlertmanagerFailedReload](#alertmanagerfailedreload) | `critical` | `10m` | alertmanager.rules |
 | [AlertmanagerMembersInconsistent](#alertmanagermembersinconsistent) | `critical` | `15m` | alertmanager.rules |
+| [CertificateExpiryCritical](#certificateexpirycritical) | `critical` | `-` | blackbox |
+| [DnsProbeFailed](#dnsprobefailed) | `critical` | `5m` | blackbox |
 | [GatusDown](#gatusdown) | `critical` | `5m` | vps |
 | [KubeAPIDown](#kubeapidown) | `critical` | `15m` | kubernetes-system-apiserver |
 | [KubeAPIErrorBudgetBurn](#kubeapierrorbudgetburn) | `critical` | `2m` | kube-apiserver-slos |
@@ -124,11 +126,18 @@ Silencian la alerta *target* mientras exista la *source* con las mismas labels d
 | [PrometheusTargetSyncFailure](#prometheustargetsyncfailure) | `critical` | `5m` | prometheus |
 | [PveGuestDown](#pveguestdown) | `critical` | `5m` | pve |
 | [PveNodeDown](#pvenodedown) | `critical` | `5m` | pve |
+| [ThanosCompactHalted](#thanoscompacthalted) | `critical` | `5m` | thanos |
 | [VpsUnreachable](#vpsunreachable) | `critical` | `5m` | vps |
 | [AlertmanagerClusterFailedPeers](#alertmanagerclusterfailedpeers) | `warning` | `15m` | alertmanager.rules |
 | [AlertmanagerClusterFailedToSendAlerts](#alertmanagerclusterfailedtosendalerts) | `warning` | `5m` | alertmanager.rules |
 | [AlertmanagerFailedToSendAlerts](#alertmanagerfailedtosendalerts) | `warning` | `5m` | alertmanager.rules |
+| [ArgoCDAppOutOfSync](#argocdappoutofsync) | `warning` | `30m` | argocd |
+| [ArgoCDAppUnhealthy](#argocdappunhealthy) | `warning` | `15m` | argocd |
+| [ArgoCDMetricsAbsent](#argocdmetricsabsent) | `warning` | `15m` | argocd |
+| [ArgoCDSyncFailed](#argocdsyncfailed) | `warning` | `-` | argocd |
+| [CertificateExpiringSoon](#certificateexpiringsoon) | `warning` | `1h` | blackbox |
 | [ConfigReloaderSidecarErrors](#configreloadersidecarerrors) | `warning` | `10m` | config-reloaders |
+| [EndpointDown](#endpointdown) | `warning` | `5m` | blackbox |
 | [KubeAPIErrorBudgetBurn](#kubeapierrorbudgetburn) | `warning` | `1h` | kube-apiserver-slos |
 | [KubeAPIErrorBudgetBurn](#kubeapierrorbudgetburn) | `warning` | `3h` | kube-apiserver-slos |
 | [KubeAPIInstanceUnreachable](#kubeapiinstanceunreachable) | `warning` | `15m` | kubernetes-system-apiserver |
@@ -172,6 +181,9 @@ Silencian la alerta *target* mientras exista la *source* con las mismas labels d
 | [KubeletPodStartUpLatencyHigh](#kubeletpodstartuplatencyhigh) | `warning` | `15m` | kubernetes-system-kubelet |
 | [KubeletServerCertificateExpiration](#kubeletservercertificateexpiration) | `warning` | `-` | kubernetes-system-kubelet |
 | [KubeletServerCertificateRenewalErrors](#kubeletservercertificaterenewalerrors) | `warning` | `15m` | kubernetes-system-kubelet |
+| [LokiDiscardedSamples](#lokidiscardedsamples) | `warning` | `-` | loki |
+| [LokiRequestErrors](#lokirequesterrors) | `warning` | `15m` | loki |
+| [LokiRetentionNotRunning](#lokiretentionnotrunning) | `warning` | `1h` | loki |
 | [LonghornBackupStale](#longhornbackupstale) | `warning` | `30m` | longhorn |
 | [LonghornDiskNotSchedulable](#longhorndisknotschedulable) | `warning` | `15m` | longhorn |
 | [LonghornVolumeStatusWarning](#longhornvolumestatuswarning) | `warning` | `5m` | longhorn |
@@ -225,7 +237,14 @@ Silencian la alerta *target* mientras exista la *source* con las mismas labels d
 | [PveGuestNotBackedUp](#pveguestnotbackedup) | `warning` | `1h` | pve |
 | [PveScrapeFailed](#pvescrapefailed) | `warning` | `10m` | pve |
 | [PveStorageAlmostFull](#pvestoragealmostfull) | `warning` | `30m` | pve |
+| [QDeviceUnreachable](#qdeviceunreachable) | `warning` | `5m` | blackbox |
 | [TargetDown](#targetdown) | `warning` | `10m` | general.rules |
+| [ThanosBucketOperationsFailing](#thanosbucketoperationsfailing) | `warning` | `15m` | thanos |
+| [ThanosCompactNotUploading](#thanoscompactnotuploading) | `warning` | `30m` | thanos |
+| [ThanosSidecarNotUploading](#thanossidecarnotuploading) | `warning` | `30m` | thanos |
+| [ThanosSidecarPrometheusDown](#thanossidecarprometheusdown) | `warning` | `5m` | thanos |
+| [VectorLokiNotSending](#vectorlokinotsending) | `warning` | `15m` | vector |
+| [VectorLokiSinkErrors](#vectorlokisinkerrors) | `warning` | `15m` | vector |
 | [VpsFilesystemAlmostFull](#vpsfilesystemalmostfull) | `warning` | `30m` | vps |
 | [CPUThrottlingHigh](#cputhrottlinghigh) | `info` | `15m` | kubernetes-resources |
 | [KubeNodeEviction](#kubenodeeviction) | `info` | `0s` | kubernetes-system-kubelet |
@@ -331,6 +350,104 @@ An Alertmanager instance failed to send notifications.
 
 ```promql
 ( rate(alertmanager_notifications_failed_total{job="kps-kube-prometheus-stack-alertmanager",container="alertmanager",namespace="observability"}[15m]) / ignoring (reason) group_left rate(alertmanager_notifications_total{job="kps-kube-prometheus-stack-alertmanager",container="alertmanager",namespace="observability"}[15m]) ) > 0.01
+```
+
+#### argocd
+
+<sub>PrometheusRule: `workloads/observability/argocd.prometheusrule.yaml` (propio del repo)</sub>
+
+##### ArgoCDAppOutOfSync
+
+`warning` · `for: 30m`
+
+Argo CD app {{ $labels.name }} is {{ $labels.sync_status }}
+
+```promql
+argocd_app_info{sync_status!="Synced"} == 1
+```
+
+##### ArgoCDAppUnhealthy
+
+`warning` · `for: 15m`
+
+Argo CD app {{ $labels.name }} is {{ $labels.health_status }}
+
+```promql
+argocd_app_info{health_status!~"Healthy|Progressing|Suspended"} == 1
+```
+
+##### ArgoCDMetricsAbsent
+
+`warning` · `for: 15m`
+
+No metrics from the Argo CD application controller
+
+```promql
+absent(argocd_app_info)
+```
+
+##### ArgoCDSyncFailed
+
+`warning` · `for: -`
+
+Argo CD sync of {{ $labels.name }} ended in {{ $labels.phase }}
+
+```promql
+sum by (name, phase) (increase(argocd_app_sync_total{phase=~"Error|Failed"}[10m])) > 0
+```
+
+#### blackbox
+
+<sub>PrometheusRule: `workloads/blackbox-exporter/prometheusrule.yaml` (propio del repo)</sub>
+
+##### CertificateExpiryCritical
+
+`critical` · `for: -`
+
+Certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}
+
+```promql
+(probe_ssl_earliest_cert_expiry - time()) < 7 * 86400
+```
+
+##### DnsProbeFailed
+
+`critical` · `for: 5m`
+
+DNS server {{ $labels.instance }} fails the {{ $labels.job }} check
+
+```promql
+probe_success{job=~"blackbox-dns-.*"} == 0
+```
+
+##### CertificateExpiringSoon
+
+`warning` · `for: 1h`
+
+Certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}
+
+```promql
+(probe_ssl_earliest_cert_expiry - time()) < 21 * 86400
+```
+
+##### EndpointDown
+
+`warning` · `for: 5m`
+
+{{ $labels.instance }} is not answering
+
+```promql
+probe_success{job=~"blackbox-http-.*"} == 0
+```
+
+##### QDeviceUnreachable
+
+`warning` · `for: 5m`
+
+Proxmox QDevice (qnetd on {{ $labels.instance }}) is unreachable
+
+```promql
+probe_success{job="blackbox-qdevice"} == 0
 ```
 
 #### config-reloaders
@@ -1041,6 +1158,40 @@ Kubelet is running at capacity.
 
 ```promql
 ( max by (cluster, instance) ( kubelet_running_pods{job="kubelet", metrics_path="/metrics"} > 1 ) * on (cluster, instance) group_left(node) max by (cluster, instance, node) ( kubelet_node_name{job="kubelet", metrics_path="/metrics"} ) ) / on (cluster, node) group_left() max by (cluster, node) ( kube_node_status_capacity{job="kube-state-metrics", resource="pods"} != 1 ) > 0.95
+```
+
+#### loki
+
+<sub>PrometheusRule: `workloads/observability/loki.prometheusrule.yaml` (propio del repo)</sub>
+
+##### LokiDiscardedSamples
+
+`warning` · `for: -`
+
+Loki is rejecting log lines ({{ $labels.reason }})
+
+```promql
+sum by (reason) (increase(loki_discarded_samples_total[15m])) > 0
+```
+
+##### LokiRequestErrors
+
+`warning` · `for: 15m`
+
+Loki: {{ $value | humanizePercentage }} of {{ $labels.route }} requests fail
+
+```promql
+sum by (route) (rate(loki_request_duration_seconds_count{status_code=~"5.."}[5m])) / sum by (route) (rate(loki_request_duration_seconds_count[5m])) > 0.1
+```
+
+##### LokiRetentionNotRunning
+
+`warning` · `for: 1h`
+
+Loki retention has not run in {{ $value | humanizeDuration }}
+
+```promql
+(time() - loki_compactor_apply_retention_last_successful_run_timestamp_seconds) > 6 * 3600
 ```
 
 #### longhorn
@@ -1765,6 +1916,84 @@ Proxmox storage {{ $labels.id }} is {{ $value | humanizePercentage }} full
 
 ```promql
 max by (id) (pve_disk_usage_bytes{id=~"storage/.+"}) / (max by (id) (pve_disk_size_bytes{id=~"storage/.+"}) > 0) > 0.85
+```
+
+#### thanos
+
+<sub>PrometheusRule: `workloads/observability/thanos.prometheusrule.yaml` (propio del repo)</sub>
+
+##### ThanosCompactHalted
+
+`critical` · `for: 5m`
+
+Thanos compactor has halted
+
+```promql
+thanos_compact_halted == 1
+```
+
+##### ThanosBucketOperationsFailing
+
+`warning` · `for: 15m`
+
+{{ $labels.job }}: {{ $value | humanizePercentage }} of bucket operations failing
+
+```promql
+sum by (job) (rate(thanos_objstore_bucket_operation_failures_total[5m])) / sum by (job) (rate(thanos_objstore_bucket_operations_total[5m])) > 0.05
+```
+
+##### ThanosCompactNotUploading
+
+`warning` · `for: 30m`
+
+Thanos compactor has not uploaded a block in {{ $value | humanizeDuration }}
+
+```promql
+(time() - max by (job) (thanos_objstore_bucket_last_successful_upload_time{job="thanos-compact"})) > 24 * 3600
+```
+
+##### ThanosSidecarNotUploading
+
+`warning` · `for: 30m`
+
+Thanos sidecar has not uploaded a block in {{ $value | humanizeDuration }}
+
+```promql
+(time() - max by (job) (max_over_time(thanos_objstore_bucket_last_successful_upload_time{job="kube-prometheus-stack-thanos-discovery"}[24h]))) > 3 * 3600
+```
+
+##### ThanosSidecarPrometheusDown
+
+`warning` · `for: 5m`
+
+Thanos sidecar in {{ $labels.pod }} cannot reach Prometheus
+
+```promql
+thanos_sidecar_prometheus_up == 0
+```
+
+#### vector
+
+<sub>PrometheusRule: `workloads/observability/loki.prometheusrule.yaml` (propio del repo)</sub>
+
+##### VectorLokiNotSending
+
+`warning` · `for: 15m`
+
+No logs reaching Loki through {{ $labels.component_id }}
+
+```promql
+sum by (component_id) (rate(vector_component_sent_events_total{component_id=~"loki_.*"}[15m])) == 0
+```
+
+##### VectorLokiSinkErrors
+
+`warning` · `for: 15m`
+
+Vector on {{ $labels.pod }} fails to ship to Loki ({{ $labels.component_id }})
+
+```promql
+sum by (component_id, pod) (rate(vector_component_errors_total{component_id=~"loki_.*"}[5m])) > 0
 ```
 
 #### vps

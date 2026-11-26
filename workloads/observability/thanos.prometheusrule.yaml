@@ -1,0 +1,59 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: thanos
+  namespace: observability
+spec:
+  groups:
+    - name: thanos
+      interval: 60s
+      rules:
+        - alert: ThanosCompactHalted
+          expr: thanos_compact_halted == 1
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: 'Thanos compactor has halted'
+            description: 'No retention, compaction or downsampling until it restarts. The reason is in the thanos-compact logs ("critical error detected; halting").'
+
+        # el compactor sube bloques compactados al menos una vez por dia
+        - alert: ThanosCompactNotUploading
+          expr: (time() - max by (job) (thanos_objstore_bucket_last_successful_upload_time{job="thanos-compact"})) > 24 * 3600
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Thanos compactor has not uploaded a block in {{ $value | humanizeDuration }}'
+            description: 'Compaction and downsampling are not making progress.'
+
+        - alert: ThanosBucketOperationsFailing
+          expr: |
+            sum by (job) (rate(thanos_objstore_bucket_operation_failures_total[5m]))
+              / sum by (job) (rate(thanos_objstore_bucket_operations_total[5m])) > 0.05
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: '{{ $labels.job }}: {{ $value | humanizePercentage }} of bucket operations failing'
+            description: 'Operations against the thanos bucket in Garage are failing. Check Garage on the NAS.'
+
+        - alert: ThanosSidecarPrometheusDown
+          expr: thanos_sidecar_prometheus_up == 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Thanos sidecar in {{ $labels.pod }} cannot reach Prometheus'
+            description: 'Blocks from this Prometheus are not being uploaded or served to Thanos Query.'
+
+        # Prometheus corta un bloque cada 2h; max by job junta las series de antes y despues de un reinicio
+        - alert: ThanosSidecarNotUploading
+          expr: |
+            (time() - max by (job) (max_over_time(thanos_objstore_bucket_last_successful_upload_time{job="kube-prometheus-stack-thanos-discovery"}[24h]))) > 3 * 3600
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Thanos sidecar has not uploaded a block in {{ $value | humanizeDuration }}'
+            description: 'Metrics older than the local 15d retention will be lost if this continues. Check the thanos-sidecar container of Prometheus.'

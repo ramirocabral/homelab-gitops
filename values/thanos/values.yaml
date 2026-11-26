@@ -57,7 +57,7 @@ compact:
   persistence:
     enabled: true
     storageClass: single-rwo-nobackup   # scratch para bajar, procesar y volver a subir bloques
-    size: 10Gi
+    size: 30Gi   # compactar a 14d baja ~7 bloques de 1 GiB y escribe otro tanto
   resources:
     requests:
       cpu: 50m

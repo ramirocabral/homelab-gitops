@@ -1,0 +1,58 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: loki
+  namespace: observability
+spec:
+  groups:
+    - name: loki
+      interval: 60s
+      rules:
+        - alert: LokiRequestErrors
+          expr: |
+            sum by (route) (rate(loki_request_duration_seconds_count{status_code=~"5.."}[5m]))
+              / sum by (route) (rate(loki_request_duration_seconds_count[5m])) > 0.1
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Loki: {{ $value | humanizePercentage }} of {{ $labels.route }} requests fail'
+            description: 'Loki has been answering 5xx on {{ $labels.route }} for over 15m. Check the loki-0 logs and Garage.'
+
+        - alert: LokiDiscardedSamples
+          expr: sum by (reason) (increase(loki_discarded_samples_total[15m])) > 0
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Loki is rejecting log lines ({{ $labels.reason }})'
+            description: '{{ $value | humanize }} lines discarded in the last 15m: they are lost.'
+
+        - alert: LokiRetentionNotRunning
+          expr: (time() - loki_compactor_apply_retention_last_successful_run_timestamp_seconds) > 6 * 3600
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Loki retention has not run in {{ $value | humanizeDuration }}'
+            description: 'The compactor normally applies retention every 10m. Logs older than 30d are piling up in the loki bucket.'
+
+    - name: vector
+      interval: 60s
+      rules:
+        - alert: VectorLokiSinkErrors
+          expr: sum by (component_id, pod) (rate(vector_component_errors_total{component_id=~"loki_.*"}[5m])) > 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Vector on {{ $labels.pod }} fails to ship to Loki ({{ $labels.component_id }})'
+            description: 'The sink has been erroring for over 15m; logs are buffering or being dropped.'
+
+        - alert: VectorLokiNotSending
+          expr: sum by (component_id) (rate(vector_component_sent_events_total{component_id=~"loki_.*"}[15m])) == 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'No logs reaching Loki through {{ $labels.component_id }}'
+            description: 'Vector has sent nothing to Loki for over 30m across all nodes.'

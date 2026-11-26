@@ -1,0 +1,103 @@
+# una app nueva bajo *.lab hay que sumarla a http-lab
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: http-lab
+  namespace: observability
+spec:
+  jobName: blackbox-http-lab
+  interval: 60s
+  module: http_up
+  prober:
+    url: blackbox-exporter.observability.svc:9115
+  targets:
+    staticConfig:
+      static:
+        - https://alertmanager.lab.cabral.net.ar
+        - https://argocd.lab.cabral.net.ar
+        - https://auth.lab.cabral.net.ar
+        - https://bazarr.lab.cabral.net.ar
+        - https://bookmarks.lab.cabral.net.ar
+        - https://books.lab.cabral.net.ar
+        - https://cliproxy.lab.cabral.net.ar
+        - https://gohoard.lab.cabral.net.ar
+        - https://grafana.lab.cabral.net.ar
+        - https://jellyfin.lab.cabral.net.ar
+        - https://longhorn.lab.cabral.net.ar
+        - https://obsidian.lab.cabral.net.ar
+        - https://plata.lab.cabral.net.ar
+        - https://prometheus.lab.cabral.net.ar
+        - https://prowlarr.lab.cabral.net.ar
+        - https://qbittorrent.lab.cabral.net.ar
+        - https://radarr.lab.cabral.net.ar
+        - https://seerr.lab.cabral.net.ar
+        - https://sonarr.lab.cabral.net.ar
+        - https://thanos.lab.cabral.net.ar
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: http-edge
+  namespace: observability
+spec:
+  jobName: blackbox-http-edge
+  interval: 60s
+  module: http_up
+  prober:
+    url: blackbox-exporter.observability.svc:9115
+  targets:
+    staticConfig:
+      static:
+        - https://pve.cabral.net.ar
+        - https://truenas.cabral.net.ar
+        - https://pbs.cabral.net.ar
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: dns-lab
+  namespace: observability
+spec:
+  jobName: blackbox-dns-lab
+  interval: 60s
+  module: dns_lab
+  prober:
+    url: blackbox-exporter.observability.svc:9115
+  targets:
+    staticConfig:
+      static:
+        - 192.168.9.53
+        - 192.168.9.54
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: dns-external
+  namespace: observability
+spec:
+  jobName: blackbox-dns-external
+  interval: 60s
+  module: dns_external
+  prober:
+    url: blackbox-exporter.observability.svc:9115
+  targets:
+    staticConfig:
+      static:
+        - 192.168.9.53
+        - 192.168.9.54
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: qdevice
+  namespace: observability
+spec:
+  jobName: blackbox-qdevice
+  interval: 60s
+  module: tcp_connect
+  prober:
+    url: blackbox-exporter.observability.svc:9115
+  targets:
+    staticConfig:
+      static:
+        - 192.168.9.6:5403

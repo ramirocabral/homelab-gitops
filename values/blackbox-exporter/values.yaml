@@ -1,0 +1,54 @@
+fullnameOverride: blackbox-exporter
+
+config:
+  modules:
+    # 3xx/401/403 cuentan como vivo: varias apps redirigen al login
+    http_up:
+      prober: http
+      timeout: 10s
+      http:
+        preferred_ip_protocol: ip4
+        follow_redirects: false
+        fail_if_not_ssl: true
+        valid_status_codes: [200, 204, 301, 302, 303, 307, 308, 401, 403]
+
+    dns_lab:
+      prober: dns
+      timeout: 5s
+      dns:
+        preferred_ip_protocol: ip4
+        query_name: grafana.lab.cabral.net.ar
+        query_type: A
+        valid_rcodes: [NOERROR]
+        validate_answer_rrs:
+          fail_if_not_matches_regexp:
+            - '.*\t192\.168\.9\.240$'
+
+    dns_external:
+      prober: dns
+      timeout: 5s
+      dns:
+        preferred_ip_protocol: ip4
+        query_name: cloudflare.com
+        query_type: A
+        valid_rcodes: [NOERROR]
+        validate_answer_rrs:
+          fail_if_none_matches_regexp:
+            - '.*\tIN\tA\t.*'
+
+    tcp_connect:
+      prober: tcp
+      timeout: 5s
+      tcp:
+        preferred_ip_protocol: ip4
+
+serviceMonitor:
+  selfMonitor:
+    enabled: true
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 32Mi
+  limits:
+    memory: 64Mi

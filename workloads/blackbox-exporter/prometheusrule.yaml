@@ -1,0 +1,53 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: blackbox
+  namespace: observability
+spec:
+  groups:
+    - name: blackbox
+      interval: 60s
+      rules:
+        - alert: EndpointDown
+          expr: probe_success{job=~"blackbox-http-.*"} == 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: '{{ $labels.instance }} is not answering'
+            description: 'The HTTPS probe to {{ $labels.instance }} has failed for over 5m: DNS, gateway or proxy, certificate, or the app itself.'
+
+        - alert: CertificateExpiringSoon
+          expr: (probe_ssl_earliest_cert_expiry - time()) < 21 * 86400
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}'
+            description: "Let's Encrypt renews 30 days before expiry, so renewal has been failing for over a week (cert-manager in the cluster, certbot on the edge proxy)."
+
+        - alert: CertificateExpiryCritical
+          expr: (probe_ssl_earliest_cert_expiry - time()) < 7 * 86400
+          labels:
+            severity: critical
+          annotations:
+            summary: 'Certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}'
+            description: 'Renewal has been failing for over 3 weeks.'
+
+        - alert: DnsProbeFailed
+          expr: probe_success{job=~"blackbox-dns-.*"} == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: 'DNS server {{ $labels.instance }} fails the {{ $labels.job }} check'
+            description: 'Technitium on {{ $labels.instance }} has been failing for over 5m: no answer, wrong answer for *.lab, or no upstream resolution.'
+
+        - alert: QDeviceUnreachable
+          expr: probe_success{job="blackbox-qdevice"} == 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Proxmox QDevice (qnetd on {{ $labels.instance }}) is unreachable'
+            description: 'pve and pve02 are still quorate, but without the third vote the next node failure loses quorum. Check the qdevice Incus container on the NAS.'

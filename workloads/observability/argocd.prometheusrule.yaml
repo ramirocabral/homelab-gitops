@@ -1,0 +1,45 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: argocd
+  namespace: observability
+spec:
+  groups:
+    - name: argocd
+      interval: 60s
+      rules:
+        - alert: ArgoCDAppUnhealthy
+          expr: argocd_app_info{health_status!~"Healthy|Progressing|Suspended"} == 1
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Argo CD app {{ $labels.name }} is {{ $labels.health_status }}'
+            description: 'The application has not been Healthy for over 15m. See https://argocd.lab.cabral.net.ar/applications/argocd/{{ $labels.name }}'
+
+        - alert: ArgoCDAppOutOfSync
+          expr: argocd_app_info{sync_status!="Synced"} == 1
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Argo CD app {{ $labels.name }} is {{ $labels.sync_status }}'
+            description: 'Auto-sync has not converged in 30m: a failing sync, an immutable field, or a diff Argo keeps reverting.'
+
+        - alert: ArgoCDSyncFailed
+          expr: sum by (name, phase) (increase(argocd_app_sync_total{phase=~"Error|Failed"}[10m])) > 0
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Argo CD sync of {{ $labels.name }} ended in {{ $labels.phase }}'
+            description: 'See the last sync result in the Argo CD UI.'
+
+        # con el controller trabado (Terminating, como el 2026-11-16) el target desaparece y TargetDown no salta
+        - alert: ArgoCDMetricsAbsent
+          expr: absent(argocd_app_info)
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'No metrics from the Argo CD application controller'
+            description: 'argocd-application-controller is down or stuck, so nothing is being synced. Check the argocd-application-controller-0 pod.'

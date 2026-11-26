@@ -23,6 +23,9 @@ prometheus:
   # service gRPC (10901) que expone el sidecar de Thanos para que lo consuma Thanos Query
   thanosService:
     enabled: true
+  # metricas del sidecar (uploads a Garage)
+  thanosServiceMonitor:
+    enabled: true
 
   prometheusSpec:
     serviceMonitorSelectorNilUsesHelmValues: false
