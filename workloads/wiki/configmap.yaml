@@ -7,7 +7,7 @@ data:
   default.conf: |
     server {
         listen 8080;
-        root /git/current;
+        root /git/repo/current;
         index index.html;
         error_page 404 /404.html;
 

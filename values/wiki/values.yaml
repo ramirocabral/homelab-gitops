@@ -44,7 +44,7 @@ controllers:
         env:
           GITSYNC_REPO: git@github.com:ramirocabral/homelab-wiki.git
           GITSYNC_REF: site
-          GITSYNC_ROOT: /git
+          GITSYNC_ROOT: /git/repo
           GITSYNC_LINK: current
           GITSYNC_PERIOD: 60s
           GITSYNC_MAX_FAILURES: "5"
