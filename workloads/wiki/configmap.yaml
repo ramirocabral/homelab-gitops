@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wiki-nginx
+  namespace: wiki
+data:
+  default.conf: |
+    server {
+        listen 8080;
+        root /git/current;
+        index index.html;
+        error_page 404 /404.html;
+
+        location / {
+            try_files $uri $uri.html $uri/ =404;
+        }
+
+        location ~ /\. {
+            return 404;
+        }
+
+        location ~* "-[0-9a-f]{8}\.(css|js)$" {
+            add_header Cache-Control "public, max-age=31536000, immutable";
+        }
+    }

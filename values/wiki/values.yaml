@@ -1,0 +1,124 @@
+defaultPodOptions:
+  annotations:
+    config.linkerd.io/skip-outbound-ports: "22"
+  securityContext:
+    runAsUser: 65533
+    runAsGroup: 65533
+    runAsNonRoot: true
+    fsGroup: 65533
+    fsGroupChangePolicy: OnRootMismatch
+
+controllers:
+  wiki:
+    type: deployment
+    containers:
+      nginx:
+        image:
+          repository: docker.io/nginxinc/nginx-unprivileged
+          tag: 1.30.6-alpine-slim
+          pullPolicy: IfNotPresent
+        probes:
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /
+                port: 8080
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            memory: 64Mi
+      git-sync:
+        image:
+          repository: registry.k8s.io/git-sync/git-sync
+          tag: v4.8.0
+          pullPolicy: IfNotPresent
+        env:
+          GITSYNC_REPO: git@github.com:ramirocabral/homelab-wiki.git
+          GITSYNC_REF: site
+          GITSYNC_ROOT: /git
+          GITSYNC_LINK: current
+          GITSYNC_PERIOD: 60s
+          GITSYNC_MAX_FAILURES: "5"
+        probes:
+          liveness:
+            enabled: false
+          readiness:
+            enabled: false
+          startup:
+            enabled: false
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
+
+service:
+  wiki:
+    controller: wiki
+    ports:
+      http:
+        port: 8080
+
+route:
+  wiki:
+    hostnames:
+      - wiki.lab.cabral.net.ar
+    parentRefs:
+      - name: shared
+        namespace: envoy-gateway-system
+        sectionName: https
+    rules:
+      - backendRefs:
+          - identifier: wiki
+            port: 8080
+
+persistence:
+  git:
+    type: emptyDir
+    advancedMounts:
+      wiki:
+        git-sync:
+          - path: /git
+        nginx:
+          - path: /git
+            readOnly: true
+  git-secret:
+    type: secret
+    name: wiki-git
+    defaultMode: 0400
+    advancedMounts:
+      wiki:
+        git-sync:
+          - path: /etc/git-secret
+            readOnly: true
+  nginx-config:
+    type: configMap
+    name: wiki-nginx
+    advancedMounts:
+      wiki:
+        nginx:
+          - path: /etc/nginx/conf.d
+            readOnly: true
+  tmp:
+    type: emptyDir
+    advancedMounts:
+      wiki:
+        git-sync:
+          - path: /tmp
+        nginx:
+          - path: /tmp

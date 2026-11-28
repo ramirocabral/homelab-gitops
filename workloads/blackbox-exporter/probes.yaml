@@ -33,6 +33,7 @@ spec:
         - https://seerr.lab.cabral.net.ar
         - https://sonarr.lab.cabral.net.ar
         - https://thanos.lab.cabral.net.ar
+        - https://wiki.lab.cabral.net.ar
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: Probe
